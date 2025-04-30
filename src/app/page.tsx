@@ -1,10 +1,11 @@
-import AddCircleIcon from "@/components/icons/AddCircleIcon";
-import ChevronDownIcon from "@/components/icons/ChevronDownIcon";
-import OptionsIcon from "@/components/icons/OptionsIcon";
+import Button from "@/component/button/Button";
+import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
+import OptionsIcon from "@/component/icon/OptionsIcon";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <main>
+    <>
       <div>
         <span className="text-xs">Good Morning,</span>
         <br />
@@ -85,22 +86,17 @@ export default function Home() {
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between text-lg">
-          <p className="font-bold">Spending categories</p>
-          <button type="button">
-            <AddCircleIcon />
-          </button>
+        <div className="flex items-center justify-between font-bold text-lg">
+          <p>Spending categories</p>
+          <Link href="/category">
+            <OptionsIcon />
+          </Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 mt-2">
+        <div className="mt-2 grid grid-cols-2 gap-4">
           <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-            <div className="flex items-center justify-between gap-x-1.5">
-              <div className="flex items-center gap-x-1.5">
-                <div className="w-2 h-2 bg-red-500 rounded-full" />
-                <p>Medicine</p>
-              </div>
-              <button type="button">
-                <OptionsIcon />
-              </button>
+            <div className="flex items-center gap-x-1.5">
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+              <p>Medicine</p>
             </div>
             <div className="mt-1">
               <div className="flex items-end gap-x-1.5">
@@ -111,14 +107,9 @@ export default function Home() {
             </div>
           </div>
           <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-            <div className="flex items-center justify-between gap-x-1.5">
-              <div className="flex items-center gap-x-1.5">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <p>Utilities</p>
-              </div>
-              <button type="button">
-                <OptionsIcon />
-              </button>
+            <div className="flex items-center gap-x-1.5">
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              <p>Utilities</p>
             </div>
             <div className="mt-1">
               <div className="flex items-end gap-x-1.5">
@@ -129,14 +120,9 @@ export default function Home() {
             </div>
           </div>
           <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-            <div className="flex items-center justify-between gap-x-1.5">
-              <div className="flex items-center gap-x-1.5">
-                <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                <p>Transport</p>
-              </div>
-              <button type="button">
-                <OptionsIcon />
-              </button>
+            <div className="flex items-center gap-x-1.5">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+              <p>Transport</p>
             </div>
             <div className="mt-1">
               <div className="flex items-end gap-x-1.5">
@@ -147,14 +133,9 @@ export default function Home() {
             </div>
           </div>
           <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-            <div className="flex items-center justify-between gap-x-1.5">
-              <div className="flex items-center gap-x-1.5">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                <p>Restaurants</p>
-              </div>
-              <button type="button">
-                <OptionsIcon />
-              </button>
+            <div className="flex items-center gap-x-1.5">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+              <p>Restaurants</p>
             </div>
             <div className="mt-1">
               <div className="flex items-end gap-x-1.5">
@@ -166,21 +147,16 @@ export default function Home() {
           </div>
         </div>
         <div className="mt-4">
-          <button
-            type="button"
-            className="w-full py-2 px-4 font-bold text-center rounded-full bg-white/20 border border-white/20"
-          >
-            See more
-          </button>
+          <Button type="button">See more</Button>
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between text-lg">
-          <p className="font-bold">History</p>
-          <button type="button">
-            <AddCircleIcon />
-          </button>
+        <div className="flex items-center justify-between font-bold text-lg">
+          <p>History</p>
+          <Link href="/history">
+            <OptionsIcon />
+          </Link>
         </div>
         <div className="mt-2 space-y-2">
           <div className="flex items-center gap-x-2 justify-between">
@@ -192,7 +168,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <p className="font-bold">100.000</p>
+              <p className="font-bold">-100.000</p>
             </div>
           </div>
           <div className="flex items-center gap-x-2 justify-between">
@@ -204,7 +180,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <p className="font-bold">59.000</p>
+              <p className="font-bold">-59.000</p>
             </div>
           </div>
           <div className="flex items-center gap-x-2 justify-between">
@@ -216,7 +192,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <p className="font-bold">59.000</p>
+              <p className="font-bold">-59.000</p>
             </div>
           </div>
           <div className="flex items-center gap-x-2 justify-between">
@@ -228,11 +204,14 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <p className="font-bold">59.000</p>
+              <p className="font-bold">-59.000</p>
             </div>
           </div>
         </div>
+        <div className="mt-3">
+          <Button type="button">See more</Button>
+        </div>
       </div>
-    </main>
+    </>
   );
 }

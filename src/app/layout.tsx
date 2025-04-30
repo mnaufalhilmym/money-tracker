@@ -21,7 +21,7 @@ export default function RootLayout({
       <body
         className={`${karla.className} antialiased max-w-md mx-auto p-4 bg-black text-white text-sm`}
       >
-        {children}
+        <main>{children}</main>
       </body>
     </html>
   );
