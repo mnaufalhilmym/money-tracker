@@ -72,15 +72,15 @@ export default function Categories() {
 
   return (
     <>
-      <div className="pb-4 flex items-center justify-between">
-        <Link href="/" className="p-2 text-base">
+      <div className="pb-4 flex items-center justify-between text-lg">
+        <Link href="/" className="p-1">
           <ArrowBackIcon />
         </Link>
-        <p className="font-bold text-center text-lg">Categories</p>
+        <p className="font-bold text-center">Categories</p>
         <button
           type="button"
           onClick={() => setIsOpenAddSheet(true)}
-          className="p-2 text-base"
+          className="p-1"
         >
           <AddIcon />
         </button>
@@ -98,7 +98,7 @@ export default function Categories() {
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-2"
+          className="p-1 text-lg"
         >
           <FilterIcon />
         </button>

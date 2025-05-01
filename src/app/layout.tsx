@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Karla } from "next/font/google";
 import { ReactNode } from "react";
 import "./globals.css";
@@ -10,6 +10,10 @@ const karla = Karla({
 export const metadata: Metadata = {
   title: "Money Tracker",
   description: "Track your spending and saving",
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

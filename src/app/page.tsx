@@ -28,7 +28,7 @@ export default function Home() {
         <p>Category:</p>
         <button
           type="button"
-          className="flex items-center justify-between gap-x-1 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+          className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
         >
           <span>All</span>
           <ChevronDownIcon />
@@ -43,7 +43,7 @@ export default function Home() {
         </div>
         <button
           type="button"
-          className="flex items-center justify-between gap-x-1 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+          className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
         >
           <span>Last 7 days</span>
           <ChevronDownIcon />
@@ -86,9 +86,9 @@ export default function Home() {
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between font-bold text-lg">
-          <p>Spending categories</p>
-          <Link href="/category">
+        <div className="flex items-center justify-between font-bold">
+          <p className="text-lg">Spending categories</p>
+          <Link href="/category" className="text-xl">
             <OptionsIcon />
           </Link>
         </div>
@@ -152,9 +152,9 @@ export default function Home() {
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between font-bold text-lg">
-          <p>History</p>
-          <Link href="/history">
+        <div className="flex items-center justify-between font-bold">
+          <p className="text-lg">History</p>
+          <Link href="/history" className="text-xl">
             <OptionsIcon />
           </Link>
         </div>

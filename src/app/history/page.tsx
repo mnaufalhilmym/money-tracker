@@ -1,6 +1,5 @@
 "use client";
 
-import BottomSheet from "@/component/sheet/BottomSheet";
 import AddIcon from "@/component/icon/AddIcon";
 import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
@@ -18,15 +17,15 @@ export default function History() {
 
   return (
     <>
-      <div className="pb-4 flex items-center justify-between">
-        <Link href="/" className="p-2 text-base">
+      <div className="pb-4 flex items-center justify-between text-lg">
+        <Link href="/" className="p-1">
           <ArrowBackIcon />
         </Link>
-        <p className="font-bold text-center text-lg">History</p>
+        <p className="font-bold text-center">History</p>
         <button
           type="button"
           onClick={() => setisOpenAddSheet(true)}
-          className="p-2 text-base"
+          className="p-1"
         >
           <AddIcon />
         </button>
@@ -44,7 +43,7 @@ export default function History() {
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-2"
+          className="p-1 text-lg"
         >
           <FilterIcon />
         </button>

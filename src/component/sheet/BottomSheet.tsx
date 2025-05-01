@@ -22,8 +22,15 @@ export default function BottomSheet(props: Readonly<Props>) {
 
   useEffect(() => {
     if (props.isOpen) {
+      document.body.style.overscrollBehaviorY = "contain";
       setIsShow(true);
+    } else {
+      document.body.style.overscrollBehaviorY = "";
     }
+
+    return () => {
+      document.body.style.overscrollBehaviorY = "";
+    };
   }, [props.isOpen]);
 
   // full opened height
@@ -102,7 +109,6 @@ export default function BottomSheet(props: Readonly<Props>) {
 
   return (
     <div
-      aria-hidden="true"
       onClick={props.close}
       className={`fixed left-0 right-0 bottom-0 top-0 max-w-md mx-auto transition-colors ${
         props.isOpen ? "bg-black/60" : "bg-black/0"
@@ -110,10 +116,9 @@ export default function BottomSheet(props: Readonly<Props>) {
     >
       <div
         ref={sheetRef}
-        aria-hidden="true"
         onClick={(e) => e.stopPropagation()}
         onTransitionEnd={onTransitionEnd}
-        className="absolute bottom-0 w-full p-4 bg-zinc-800 rounded-t-2xl"
+        className="absolute bottom-0 w-full px-4 pt-2 pb-4 bg-zinc-800 rounded-t-2xl"
         style={{
           transform: `translateY(${
             props.isOpen
@@ -124,12 +129,13 @@ export default function BottomSheet(props: Readonly<Props>) {
           transition: isDragging ? "none" : "transform 0.3s ease",
         }}
       >
-        <div
-          aria-hidden="true"
+        <button
           onMouseDown={startDrag}
           onTouchStart={startDrag}
-          className="w-12 h-1 mx-auto mb-4 bg-white rounded-full cursor-grab"
-        />
+          className="block w-12 mx-auto mb-2 py-2 cursor-grab"
+        >
+          <div className="w-full h-1 bg-white rounded-full" />
+        </button>
         <div ref={sheetContentRef}>{props.children}</div>
       </div>
     </div>
