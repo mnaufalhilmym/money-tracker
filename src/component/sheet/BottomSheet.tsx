@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
   isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-  children: React.ReactNode;
+  close: () => void;
+  children: ReactNode;
 }
 
 export default function BottomSheet(props: Readonly<Props>) {
@@ -46,27 +46,33 @@ export default function BottomSheet(props: Readonly<Props>) {
   );
 
   // Mouse and touch events
-  const startDrag = (e: React.TouchEvent | React.MouseEvent) => {
+  function startDrag(e: React.TouchEvent | React.MouseEvent) {
     setIsDragging(true);
     setStartY("touches" in e ? e.touches[0].clientY : e.clientY);
-  };
+  }
 
-  const onDrag = (e: TouchEvent | MouseEvent) => {
+  function onDrag(e: TouchEvent | MouseEvent) {
     if (!isDragging) return;
 
     const currentY = "touches" in e ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
     setTranslateY(deltaY);
-  };
+  }
 
-  const stopDrag = () => {
+  function stopDrag() {
     if (!isDragging) return;
     setIsDragging(false);
     if (translateY > minHeight) {
-      props.setIsOpen(false);
+      props.close();
     }
     setTranslateY(0);
-  };
+  }
+
+  function onTransitionEnd() {
+    if (!props.isOpen) {
+      setIsShow(false);
+    }
+  }
 
   // Add/remove global listeners
   useEffect(() => {
@@ -94,16 +100,10 @@ export default function BottomSheet(props: Readonly<Props>) {
     };
   }, [isDragging, translateY]);
 
-  function onTransitionEnd() {
-    if (!props.isOpen) {
-      setIsShow(false);
-    }
-  }
-
   return (
     <div
       aria-hidden="true"
-      onClick={() => props.setIsOpen(false)}
+      onClick={props.close}
       className={`fixed left-0 right-0 bottom-0 top-0 max-w-md mx-auto transition-colors ${
         props.isOpen ? "bg-black/60" : "bg-black/0"
       } ${isShow ? "visible" : "invisible"}`}

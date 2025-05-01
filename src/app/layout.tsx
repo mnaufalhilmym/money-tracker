@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Karla } from "next/font/google";
+import { ReactNode } from "react";
 import "./globals.css";
 
 const karla = Karla({
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">

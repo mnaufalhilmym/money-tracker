@@ -7,9 +7,14 @@ import FilterIcon from "@/component/icon/FilterIcon";
 import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
 import { useState } from "react";
+import HistoryFilterSheet from "./_component/HistoryFilterSheet";
+import HistoryFormSheet from "./_component/HistoryFormSheet";
 
 export default function History() {
-  const [addSheet, setAddSheet] = useState(false);
+  const [isOpenAddSheet, setisOpenAddSheet] = useState(false);
+  const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
+  const [types, setTypes] = useState({ spending: true, saving: true });
+  const [editHistory, setEditHistory] = useState<HistoryI>();
 
   return (
     <>
@@ -20,7 +25,7 @@ export default function History() {
         <p className="font-bold text-center text-lg">History</p>
         <button
           type="button"
-          onClick={() => setAddSheet(true)}
+          onClick={() => setisOpenAddSheet(true)}
           className="p-2 text-base"
         >
           <AddIcon />
@@ -36,7 +41,11 @@ export default function History() {
             className="w-full outline-none"
           />
         </div>
-        <button type="button" className="p-2">
+        <button
+          type="button"
+          onClick={() => setIsOpenFilterSheet(true)}
+          className="p-2"
+        >
           <FilterIcon />
         </button>
       </div>
@@ -166,9 +175,21 @@ export default function History() {
         </div>
       </div>
 
-      <BottomSheet isOpen={addSheet} setIsOpen={setAddSheet}>
-        a
-      </BottomSheet>
+      <HistoryFormSheet
+        isOpen={isOpenAddSheet || !!editHistory}
+        close={() => {
+          if (isOpenAddSheet) setisOpenAddSheet(false);
+          if (editHistory) setEditHistory(undefined);
+        }}
+        history={editHistory}
+      />
+
+      <HistoryFilterSheet
+        isOpen={isOpenFilterSheet}
+        close={() => setIsOpenFilterSheet(false)}
+        types={types}
+        setTypes={setTypes}
+      />
     </>
   );
 }

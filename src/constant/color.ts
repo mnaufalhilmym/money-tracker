@@ -1,0 +1,26 @@
+const COLORS = {
+  RED: "oklch(63.7% 0.237 25.331)",
+  ORANGE: "oklch(70.5% 0.213 47.604)",
+  AMBER: "oklch(76.9% 0.188 70.08)",
+  YELLOW: "oklch(79.5% 0.184 86.047)",
+  LIME: "oklch(76.8% 0.233 130.85)",
+  GREEN: "oklch(72.3% 0.219 149.579)",
+  EMERALD: "oklch(69.6% 0.17 162.48)",
+  TEAL: "oklch(70.4% 0.14 182.503)",
+  CYAN: "oklch(71.5% 0.143 215.221)",
+  SKY: "oklch(68.5% 0.169 237.323)",
+  BLUE: "oklch(62.3% 0.214 259.815)",
+  INDIGO: "oklch(58.5% 0.233 277.117)",
+  VIOLET: "oklch(60.6% 0.25 292.717)",
+  PURPLE: "oklch(62.7% 0.265 303.9)",
+  FUCHSIA: "oklch(66.7% 0.295 322.15)",
+  PINK: "oklch(65.6% 0.241 354.308)",
+  ROSE: "oklch(64.5% 0.246 16.439)",
+  SLATE: "oklch(55.4% 0.046 257.417)",
+  GRAY: "oklch(55.1% 0.027 264.364)",
+  ZINC: "oklch(55.2% 0.016 285.938)",
+  NEUTRAL: "oklch(55.6% 0 0)",
+  STONE: "oklch(55.3% 0.013 58.071)",
+} as const;
+
+export { COLORS };
