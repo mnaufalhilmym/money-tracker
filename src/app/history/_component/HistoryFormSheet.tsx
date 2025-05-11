@@ -14,6 +14,7 @@ import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
 import ImagesIcon from "@/component/icon/ImagesIcon";
 import CloseIcon from "@/component/icon/CloseIcon";
 import LocationIcon from "@/component/icon/LocationIcon";
+import { randomString } from "@/util/randomString";
 
 interface Props {
   isOpen: boolean;
@@ -22,6 +23,11 @@ interface Props {
 }
 
 export default function HistoryFormSheet(props: Readonly<Props>) {
+  const title = useMemo(
+    () => (props.history ? "Edit History" : "Add History"),
+    [props.history]
+  );
+
   const [value, setValue] = useState(props.history ?? {});
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
 
@@ -31,27 +37,35 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
         file: File;
       }[]
   >([]);
+  const [formImagePreviews, setFormImagePreviews] = useState<
+    { id: string; url: string; name: string }[]
+  >([]);
 
   useEffect(() => {
     setValue(props.history ?? {});
   }, [props.history]);
 
-  const title = useMemo(
-    () => (props.history ? "Edit History" : "Add History"),
-    [props.history]
-  );
+  useEffect(() => {
+    setFormImagePreviews((prev) => {
+      const previews: typeof prev = [];
 
-  const formImagePreviews = useMemo(() => {
-    if (!formImageList) {
-      return [];
-    } else {
-      const previews: { id: string; url: string; name: string }[] = [];
-      formImageList.forEach((image) => {
-        const url = URL.createObjectURL(image.file);
-        previews.push({ id: image.id, url, name: image.file.name });
+      prev.forEach((image) => {
+        const sourceIdx = formImageList.findIndex((s) => s.id === image.id);
+        if (sourceIdx >= 0) {
+          previews.push(image);
+        }
       });
+
+      formImageList.forEach((image) => {
+        const prevIdx = previews.findIndex((p) => p.id === image.id);
+        if (prevIdx === -1) {
+          const url = URL.createObjectURL(image.file);
+          previews.push({ id: image.id, url, name: image.file.name });
+        }
+      });
+
       return previews;
-    }
+    });
   }, [formImageList]);
 
   function removeFormImage(id: string) {
@@ -106,7 +120,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           <div className="flex items-center gap-x-4">
             <input
               type="text"
-              placeholder="Description"
+              placeholder="Title"
               className="outline-none w-full text-center"
             />
             <div className="flex items-center gap-x-2">
@@ -128,16 +142,16 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
               <p className="font-bold">Images</p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {formImagePreviews.map((image) => (
-                  <div key={image.url} className="relative">
+                  <div key={image.url} className="relative w-16 h-16 ">
                     <img
                       src={image.url}
                       alt={image.name}
-                      className="w-16 h-16 object-cover"
+                      className="w-full h-full object-cover"
                     />
                     <button
                       type="button"
                       onClick={() => removeFormImage(image.id)}
-                      className="absolute right-1 top-1"
+                      className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
                     >
                       <CloseIcon />
                     </button>
@@ -196,7 +210,7 @@ function ImagesPicker(props: Readonly<ImagesPickerProps>) {
     if (files) {
       const imageList: { id: string; file: File }[] = [];
       Array.from(files).forEach((f) => {
-        imageList.push({ id: crypto.randomUUID(), file: f });
+        imageList.push({ id: randomString(8), file: f });
       });
       props.setImageList(imageList);
     } else {

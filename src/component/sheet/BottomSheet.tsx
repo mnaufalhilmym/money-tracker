@@ -17,6 +17,7 @@ export default function BottomSheet(props: Readonly<Props>) {
   const [translateY, setTranslateY] = useState(0);
   const [maxHeight, setMaxHeight] = useState(150);
   const [minHeight, setMinHeight] = useState(maxHeight / 2);
+  const [contentHeight, setContentHeight] = useState(0);
 
   const padding = 56;
 
@@ -47,10 +48,23 @@ export default function BottomSheet(props: Readonly<Props>) {
     }
   }, [translateY, maxHeight, sheetRef.current?.getBoundingClientRect().top]);
 
-  const contentHeight = useMemo(
-    () => sheetContentRef.current?.offsetHeight ?? 0,
-    [sheetContentRef.current?.offsetHeight]
-  );
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (sheetContentRef.current) {
+        setContentHeight(sheetContentRef.current.offsetHeight);
+      }
+    });
+
+    if (sheetContentRef.current) {
+      resizeObserver.observe(sheetContentRef.current);
+    }
+
+    return () => {
+      if (sheetContentRef.current) {
+        resizeObserver.unobserve(sheetContentRef.current);
+      }
+    };
+  }, []);
 
   // Mouse and touch events
   function startDrag(e: React.TouchEvent | React.MouseEvent) {
