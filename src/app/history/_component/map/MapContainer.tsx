@@ -9,6 +9,13 @@ import SearchList from "./SearchList";
 import { Map } from "leaflet";
 
 interface Props {
+  isSheetOpen: boolean;
+  location?: {
+    lat: number;
+    lng: number;
+    name: string;
+    displayName: string;
+  };
   onPick: (loc: {
     lat: number;
     lng: number;
@@ -35,14 +42,24 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
   const [isLoadingSearchResult, setIsLoadingSearchResult] = useState(false);
 
   useEffect(() => {
-    // fallback to default location
-    locateMe({ onError: () => setPosition(defaultPosition) });
-  }, []);
+    if (!mapRef.current) return;
+
+    if (props.isSheetOpen && !props.location) {
+      locateMe({
+        onError: () => {
+          changePosition(defaultPosition[0], defaultPosition[1]);
+        },
+      });
+    }
+  }, [props.isSheetOpen, props.location, mapRef.current]);
 
   useEffect(() => {
     if (!debounceSearchLocation.trim()) {
       setSearchResult([]);
+      return;
     }
+
+    const abortController = new AbortController();
 
     (async () => {
       setIsLoadingSearchResult(true);
@@ -50,7 +67,8 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
           debounceSearchLocation
-        )}&format=json`
+        )}&format=json`,
+        { signal: abortController.signal }
       );
       const data: NovatimLocation[] = await res.json();
 
@@ -79,16 +97,21 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
       setSearchResult(searchResult);
 
       setIsLoadingSearchResult(false);
+
+      return () => {
+        abortController.abort();
+      };
     })();
   }, [debounceSearchLocation]);
 
   function locateMe(props?: {
     onError: (err: GeolocationPositionError) => void;
+    abortController?: AbortController;
   }) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        changePosition(latitude, longitude);
+        changePosition(latitude, longitude, props?.abortController);
       },
       (err) => {
         console.error("Geolocation error:", err);
@@ -105,13 +128,18 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
     setIsShowSearchResult(!!e.target.value);
   }
 
-  async function changePosition(lat: number, lng: number) {
+  async function changePosition(
+    lat: number,
+    lng: number,
+    abortController?: AbortController
+  ) {
     setPosition([lat, lng]);
     mapRef.current?.setView([lat, lng]);
 
     // Call reverse geocoding using Nominatim
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+      { signal: abortController?.signal }
     );
     const data: NovatimLocation = await res.json();
 
