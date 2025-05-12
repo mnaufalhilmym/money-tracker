@@ -2,9 +2,9 @@ import CloseIcon from "@/component/icon/CloseIcon";
 import BottomSheet from "@/component/sheet/BottomSheet";
 
 interface Props {
-  image?: { url: string; name: string };
   isOpen: boolean;
   close: () => void;
+  image?: { url: string; name: string };
 }
 
 export default function ImagePreviewSheet(props: Readonly<Props>) {
@@ -20,6 +20,7 @@ export default function ImagePreviewSheet(props: Readonly<Props>) {
             </button>
           </div>
         </div>
+        
         <img
           src={props.image?.url}
           alt={props.image?.name}

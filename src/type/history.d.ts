@@ -5,5 +5,6 @@ interface HistoryI {
   datetime?: string;
   amount?: number;
   image_ids?: string[];
-  location?: { lat: number; lon: number };
+  location?: { lat: number; lng: number };
+  location_name?: string;
 }
