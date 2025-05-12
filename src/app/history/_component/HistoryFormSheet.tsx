@@ -15,6 +15,7 @@ import ImagesIcon from "@/component/icon/ImagesIcon";
 import CloseIcon from "@/component/icon/CloseIcon";
 import LocationIcon from "@/component/icon/LocationIcon";
 import { randomString } from "@/util/randomString";
+import ImagePreviewSheet from "./ImagePreviewSheet";
 
 interface Props {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   );
 
   const [value, setValue] = useState(props.history ?? {});
+
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
 
   const [formImageList, setFormImageList] = useState<
@@ -40,6 +42,12 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   const [formImagePreviews, setFormImagePreviews] = useState<
     { id: string; url: string; name: string }[]
   >([]);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<{
+    id: string;
+    url: string;
+    name: string;
+  }>();
+  const [isShowImagePreview, setIsShowImagePreview] = useState(false);
 
   useEffect(() => {
     setValue(props.history ?? {});
@@ -68,8 +76,21 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     });
   }, [formImageList]);
 
-  function removeFormImage(id: string) {
+  function removeFormImage(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    id: string
+  ) {
+    e.stopPropagation();
     setFormImageList((prev) => [...prev.filter((f) => f.id !== id)]);
+  }
+
+  function selectImagePreview(image: {
+    id: string;
+    url: string;
+    name: string;
+  }) {
+    setSelectedImagePreview(image);
+    setIsShowImagePreview(true);
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -142,7 +163,11 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
               <p className="font-bold">Images</p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {formImagePreviews.map((image) => (
-                  <div key={image.url} className="relative w-16 h-16 ">
+                  <div
+                    key={image.url}
+                    onClick={() => selectImagePreview(image)}
+                    className="relative w-16 h-16 "
+                  >
                     <img
                       src={image.url}
                       alt={image.name}
@@ -150,7 +175,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
                     />
                     <button
                       type="button"
-                      onClick={() => removeFormImage(image.id)}
+                      onClick={(e) => removeFormImage(e, image.id)}
                       className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
                     >
                       <CloseIcon />
@@ -172,6 +197,12 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           history={props.history}
         />
       )}
+
+      <ImagePreviewSheet
+        image={selectedImagePreview}
+        isOpen={isShowImagePreview}
+        close={() => setIsShowImagePreview(false)}
+      />
     </>
   );
 }

@@ -3,13 +3,14 @@ import BottomSheet from "@/component/sheet/BottomSheet";
 
 interface Props {
   image?: { url: string; name: string };
+  isOpen: boolean;
   close: () => void;
 }
 
 export default function ImagePreviewSheet(props: Readonly<Props>) {
   return (
-    <BottomSheet isOpen={!!props.image} close={props.close}>
-      <div className="flex flex-col h-full">
+    <BottomSheet isOpen={props.isOpen} close={props.close}>
+      <div className="min-h-0 flex-1 flex flex-col">
         <div className="flex items-center justify-between text-lg">
           <div className="w-6.5 h-6.5" />
           <p className="font-bold text-center">{props.image?.name}</p>
@@ -19,7 +20,11 @@ export default function ImagePreviewSheet(props: Readonly<Props>) {
             </button>
           </div>
         </div>
-        <img src={props.image?.url} alt={props.image?.name} className="flex-1 min-h-0 mt-2 overflow-y-auto" />
+        <img
+          src={props.image?.url}
+          alt={props.image?.name}
+          className="min-h-0 flex-1 mt-2 object-contain"
+        />
       </div>
     </BottomSheet>
   );

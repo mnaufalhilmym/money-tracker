@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 interface Props {
   isOpen: boolean;
@@ -9,17 +9,16 @@ interface Props {
 }
 
 export default function BottomSheet(props: Readonly<Props>) {
-  const sheetRef = useRef<HTMLDivElement>(null);
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const [isShow, setIsShow] = useState(props.isOpen);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [translateY, setTranslateY] = useState(0);
-  const [maxHeight, setMaxHeight] = useState(150);
+  const [maxHeight, setMaxHeight] = useState(0);
   const [minHeight, setMinHeight] = useState(maxHeight / 2);
   const [contentHeight, setContentHeight] = useState(0);
 
-  const padding = 56;
+  const padding = 50;
 
   useEffect(() => {
     if (props.isOpen) {
@@ -36,17 +35,22 @@ export default function BottomSheet(props: Readonly<Props>) {
 
   // full opened height
   useEffect(() => {
-    setMaxHeight(window.innerHeight);
+    setMaxHeight(window.innerHeight * 0.9);
   }, []);
 
   // minimum visible height when closed
   useEffect(() => {
-    if (translateY === 0) {
+    if (translateY === 0 && maxHeight > 0) {
       const height =
-        maxHeight - (sheetRef.current?.getBoundingClientRect().top ?? 0);
+        maxHeight -
+        (padding + (sheetContentRef.current?.getBoundingClientRect().top ?? 0));
       setMinHeight(height / 2);
     }
-  }, [translateY, maxHeight, sheetRef.current?.getBoundingClientRect().top]);
+  }, [
+    translateY,
+    maxHeight,
+    sheetContentRef.current?.getBoundingClientRect().top,
+  ]);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
@@ -77,7 +81,10 @@ export default function BottomSheet(props: Readonly<Props>) {
 
     const currentY = "touches" in e ? e.touches[0].clientY : e.clientY;
     const deltaY = currentY - startY;
-    setTranslateY(deltaY);
+    const translateY = maxHeight - (contentHeight + padding) + deltaY;
+    if (translateY > 0) {
+      setTranslateY(deltaY);
+    }
   }
 
   function stopDrag() {
@@ -129,10 +136,9 @@ export default function BottomSheet(props: Readonly<Props>) {
       } ${isShow ? "visible" : "invisible"}`}
     >
       <div
-        ref={sheetRef}
         onClick={(e) => e.stopPropagation()}
         onTransitionEnd={onTransitionEnd}
-        className="absolute bottom-0 w-full px-4 pt-2 pb-4 bg-zinc-800 rounded-t-2xl"
+        className="absolute bottom-0 w-full px-4 pt-2 pb-4 bg-zinc-800 rounded-t-2xl flex flex-col"
         style={{
           transform: `translateY(${
             props.isOpen
@@ -150,7 +156,7 @@ export default function BottomSheet(props: Readonly<Props>) {
         >
           <div className="w-full h-1 bg-white rounded-full" />
         </button>
-        <div ref={sheetContentRef}>{props.children}</div>
+        <div ref={sheetContentRef} className="min-h-0 flex flex-col">{props.children}</div>
       </div>
     </div>
   );
