@@ -13,6 +13,8 @@ import MapSheet from "./map/MapSheet";
 import LocationIcon from "@/component/icon/LocationIcon";
 import useWindowInnerSize from "@/hook/useWindowInnerSize";
 import compressImage from "@/util/compressImage";
+import HistoryTypePickerSheet from "./HistoryTypePickerSheet";
+import HistoryCategoryPickerSheet from "./HistoryCategoryPickerSheet";
 
 interface Props {
   isOpen: boolean;
@@ -32,6 +34,13 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   const [value, setValue] = useState(props.history ?? {});
 
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
+
+  const [selectedType, setSelectedType] = useState<"Spending" | "Saving">(
+    "Spending"
+  );
+  const [isShowTypePicker, setIsShowTypePicker] = useState(false);
+
+  const [isShowCategoryPicker, setIsShowCategoryPicker] = useState(false);
 
   const [formImageList, setFormImageList] = useState<
     | {
@@ -140,13 +149,13 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
 
         <form onSubmit={onSubmit} className="mt-2 space-y-4">
           <div className="flex items-center gap-x-2">
-            <Button type="button">
+            <Button type="button" onClick={() => setIsShowTypePicker(true)}>
               <div className="flex items-center justify-center gap-x-1">
-                <span>Spending</span>
+                <span>{selectedType}</span>
                 <ChevronDownIcon />
               </div>
             </Button>
-            <Button type="button">
+            <Button type="button" onClick={() => setIsShowCategoryPicker(true)}>
               <div className="flex items-center justify-center gap-x-1">
                 <span>Medicine</span>
                 <ChevronDownIcon />
@@ -175,60 +184,64 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </div>
           </div>
 
-          <div
-            className="space-y-4 overflow-y-auto scrollable"
-            style={{ maxHeight: attributeMaxHeight }}
-          >
-            {!!formImagePreviews.length && (
-              <div>
-                <p className="font-bold">Images</p>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {formImagePreviews.map((image) => (
-                    <div
-                      key={image.url}
-                      onClick={() => selectImagePreview(image)}
-                      className="relative w-16 h-16 "
-                    >
-                      <img
-                        src={image.url}
-                        alt={image.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => removeFormImage(e, image.id)}
-                        className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
+          {(!!formImagePreviews.length || !!value.location) && (
+            <div
+              className="space-y-4 overflow-y-auto scrollable"
+              style={{ maxHeight: attributeMaxHeight }}
+            >
+              {!!formImagePreviews.length && (
+                <div>
+                  <p className="font-bold">Images</p>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {formImagePreviews.map((image) => (
+                      <div
+                        key={image.url}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => selectImagePreview(image)}
+                        className="relative w-16 h-16 "
                       >
-                        <CloseIcon />
-                      </button>
-                    </div>
-                  ))}
+                        <img
+                          src={image.url}
+                          alt={image.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => removeFormImage(e, image.id)}
+                          className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
+                        >
+                          <CloseIcon />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {!!value.location && (
-              <div>
-                <p className="font-bold">Location</p>
-                <div className="mt-1 flex gap-x-1 items-center">
-                  <div className="text-lg">
-                    <LocationIcon />
+              {!!value.location && (
+                <div>
+                  <p className="font-bold">Location</p>
+                  <div className="mt-1 flex gap-x-1.5 items-center">
+                    <div className="text-lg">
+                      <LocationIcon />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold">{value.location_name}</p>
+                      <p className="text-xs">{value.location_display_name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeLocation}
+                      className="text-base"
+                    >
+                      <CloseIcon />
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-bold">{value.location_name}</p>
-                    <p className="text-xs">{value.location_display_name}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removeLocation}
-                    className="text-base"
-                  >
-                    <CloseIcon />
-                  </button>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <Button type="submit">Add</Button>
         </form>
@@ -241,6 +254,23 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           history={props.history}
         />
       )}
+
+      <HistoryTypePickerSheet
+        isOpen={isShowTypePicker}
+        close={() => setIsShowTypePicker(false)}
+        type={selectedType}
+        setType={setSelectedType}
+      />
+
+      <HistoryCategoryPickerSheet
+        isOpen={isShowCategoryPicker}
+        close={() => setIsShowCategoryPicker(false)}
+        categories={[{ id: "1", name: "Medicine" }]}
+        category={{ id: "1", name: "Medicine" }}
+        setCategory={(c) =>
+          setValue((prev) => ({ ...prev, category_id: c.id }))
+        }
+      />
 
       <ImagePreviewSheet
         isOpen={isShowImagePreview}

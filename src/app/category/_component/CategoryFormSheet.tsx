@@ -49,7 +49,7 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="mt-4 space-y-4">
+        <form onSubmit={onSubmit} className="mt-2 space-y-4">
           <div>
             <p className="font-bold">Name</p>
             <input

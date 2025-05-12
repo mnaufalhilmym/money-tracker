@@ -12,7 +12,7 @@ export default function CategoryFilterSheet(props: Readonly<Props>) {
   return (
     <BottomSheet isOpen={props.isOpen} close={props.close}>
       <p className="font-bold text-center text-lg">Filter</p>
-      <div className="mt-4 space-y-4">
+      <div className="mt-2 space-y-4">
         <div>
           <p className="font-bold">Category Type</p>
           <div className="mt-1 space-y-1">
