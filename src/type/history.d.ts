@@ -7,4 +7,5 @@ interface HistoryI {
   image_ids?: string[];
   location?: { lat: number; lng: number };
   location_name?: string;
+  location_display_name?: string;
 }

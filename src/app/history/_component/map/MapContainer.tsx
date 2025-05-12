@@ -1,24 +1,38 @@
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer } from "react-leaflet";
 import LocationMarker from "./LocationMarker";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import LocateMeButton from "./LocateMeButton";
 import useDebounce from "@/hook/useDebounce";
 import SearchIcon from "@/component/icon/SearchIcon";
+import SearchList from "./SearchList";
+import { Map } from "leaflet";
 
 interface Props {
-  onPick: (lat: number, lng: number, name: string) => void;
+  onPick: (loc: {
+    lat: number;
+    lng: number;
+    name: string;
+    displayName: string;
+  }) => void;
 }
 
 const defaultPosition: [number, number] = [-6.2, 106.8]; // Jakarta
 
 export default function LeafletMapContainer(props: Readonly<Props>) {
+  const mapHeight = window.innerHeight * 0.9 - 176;
+
+  const mapRef = useRef<Map>(null);
+
   const [position, setPosition] = useState<[number, number]>();
+
   const [searchLocation, setSearchLocation] = useState("");
   const debounceSearchLocation = useDebounce(searchLocation, 500);
   const [searchResult, setSearchResult] = useState<
-    { lat: number; lng: number; name: string }[]
+    { lat: number; lng: number; name: string; displayName: string }[]
   >([]);
+  const [isShowSearchResult, setIsShowSearchResult] = useState(false);
+  const [isLoadingSearchResult, setIsLoadingSearchResult] = useState(false);
 
   useEffect(() => {
     // fallback to default location
@@ -31,24 +45,40 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
     }
 
     (async () => {
+      setIsLoadingSearchResult(true);
+
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
           debounceSearchLocation
         )}&format=json`
       );
-      const data: NovatimSearch[] = await res.json();
+      const data: NovatimLocation[] = await res.json();
 
-      const searchResult: { lat: number; lng: number; name: string }[] = [];
+      const searchResult: {
+        lat: number;
+        lng: number;
+        name: string;
+        displayName: string;
+      }[] = [];
       data.forEach((l) => {
-        if (searchResult.findIndex((r) => r.name === l.display_name) === -1) {
+        if (
+          searchResult.findIndex((r) => r.displayName === l.display_name) === -1
+        ) {
           const lat = Number(l.lat);
           const lng = Number(l.lon);
           if (!isNaN(lat) && !isNaN(lng)) {
-            searchResult.push({ lat, lng, name: l.display_name });
+            searchResult.push({
+              lat,
+              lng,
+              name: l.name,
+              displayName: l.display_name,
+            });
           }
         }
       });
       setSearchResult(searchResult);
+
+      setIsLoadingSearchResult(false);
     })();
   }, [debounceSearchLocation]);
 
@@ -67,17 +97,47 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
     );
   }
 
+  function onChangeSearch(e: ChangeEvent<HTMLInputElement>) {
+    setSearchLocation(e.target.value);
+    if (e.target.value) {
+      setIsLoadingSearchResult(true);
+    }
+    setIsShowSearchResult(!!e.target.value);
+  }
+
   async function changePosition(lat: number, lng: number) {
     setPosition([lat, lng]);
+    mapRef.current?.setView([lat, lng]);
 
     // Call reverse geocoding using Nominatim
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
     );
-    const data = await res.json();
-    const name = data.display_name;
+    const data: NovatimLocation = await res.json();
 
-    props.onPick(lat, lng, name);
+    props.onPick({
+      lat,
+      lng,
+      name: data.name,
+      displayName: data.display_name,
+    });
+  }
+
+  function pickSearchPosition(loc: {
+    lat: number;
+    lng: number;
+    name: string;
+    displayName: string;
+  }) {
+    setPosition([loc.lat, loc.lng]);
+    mapRef.current?.setView([loc.lat, loc.lng]);
+    props.onPick({
+      lat: loc.lat,
+      lng: loc.lng,
+      name: loc.name,
+      displayName: loc.displayName,
+    });
+    setIsShowSearchResult(false);
   }
 
   return (
@@ -87,16 +147,42 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
         <input
           type="text"
           placeholder="Search location"
-          onChange={(e) => setSearchLocation(e.target.value)}
+          onChange={onChangeSearch}
+          onFocus={() =>
+            searchLocation ? setIsShowSearchResult(true) : undefined
+          }
           className="w-full outline-none"
         />
       </div>
+
+      {isShowSearchResult && (
+        <div
+          onClick={() => setIsShowSearchResult(false)}
+          className="mt-2 absolute w-full"
+          style={{ height: mapHeight, zIndex: 1001 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-col h-full max-h-96 p-4 rounded-b-2xl bg-zinc-800/90 overflow-hidden"
+          >
+            <div className="min-h-0 h-full overflow-y-auto scrollable-div">
+              <SearchList
+                loadingList={isLoadingSearchResult}
+                list={searchResult}
+                onPick={pickSearchPosition}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <MapContainer
-        center={defaultPosition}
+        ref={mapRef}
+        center={position ?? defaultPosition}
         zoom={13}
         scrollWheelZoom={false}
         className="mt-2"
-        style={{ height: window.innerHeight * 0.9 - 134 }}
+        style={{ height: mapHeight }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -104,6 +190,7 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
         />
         <LocationMarker position={position} onPick={changePosition} />
       </MapContainer>
+
       <LocateMeButton onClick={locateMe} />
     </div>
   );

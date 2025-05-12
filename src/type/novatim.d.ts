@@ -1,4 +1,4 @@
-interface NovatimSearch {
+interface NovatimLocation {
   addresstype: string;
   boundingbox: [string, string, string, string];
   class: string;

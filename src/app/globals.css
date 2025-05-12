@@ -8,3 +8,12 @@
 .input-no-spinner {
   -moz-appearance: textfield;
 }
+
+.scrollable-div::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-div::-webkit-scrollbar-thumb {
+  background-color: darkgray;
+  border-radius: 4px;
+}

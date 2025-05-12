@@ -1,16 +1,34 @@
+import Button from "@/component/button/Button";
 import CloseIcon from "@/component/icon/CloseIcon";
 import BottomSheet from "@/component/sheet/BottomSheet";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
-  onPick: (lat: number, lng: number, name: string) => void;
+  onPick: (loc: {
+    lat: number;
+    lng: number;
+    name: string;
+    displayName: string;
+  }) => void;
 }
 
 const MapContainer = dynamic(() => import("./MapContainer"), { ssr: false });
 
 export default function MapSheet(props: Readonly<Props>) {
+  const [location, setLocation] = useState<{
+    lat: number;
+    lng: number;
+    name: string;
+    displayName: string;
+  }>();
+
+  function pickLocation() {
+    if (location) props.onPick(location);
+  }
+
   return (
     <BottomSheet isOpen={props.isOpen} close={props.close}>
       <div className="flex items-center justify-between text-lg">
@@ -24,7 +42,13 @@ export default function MapSheet(props: Readonly<Props>) {
       </div>
 
       <div className="mt-2">
-        <MapContainer onPick={props.onPick} />
+        <MapContainer onPick={setLocation} />
+      </div>
+
+      <div className="mt-2">
+        <Button type="button" onClick={pickLocation}>
+          Pick Location
+        </Button>
       </div>
     </BottomSheet>
   );

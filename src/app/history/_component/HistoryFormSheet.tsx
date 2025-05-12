@@ -199,11 +199,12 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
       <MapSheet
         isOpen={isShowMap}
         close={() => setIsShowMap(false)}
-        onPick={(lat, lng, name) =>
+        onPick={(l) =>
           setValue((prev) => ({
             ...prev,
-            location: { lat: lat, lng: lng },
-            location_name: name,
+            location: { lat: l.lat, lng: l.lng },
+            location_name: l.name,
+            location_display_name: l.displayName,
           }))
         }
       />
