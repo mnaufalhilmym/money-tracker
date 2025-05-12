@@ -23,7 +23,7 @@ export default function MapSheet(props: Readonly<Props>) {
         </div>
       </div>
 
-      <div>
+      <div className="mt-2">
         <MapContainer onPick={props.onPick} />
       </div>
     </BottomSheet>

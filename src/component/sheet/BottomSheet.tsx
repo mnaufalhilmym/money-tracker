@@ -8,6 +8,8 @@ interface Props {
   children: ReactNode;
 }
 
+const padding = 50;
+
 export default function BottomSheet(props: Readonly<Props>) {
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const [isShow, setIsShow] = useState(props.isOpen);
@@ -17,8 +19,6 @@ export default function BottomSheet(props: Readonly<Props>) {
   const [maxHeight, setMaxHeight] = useState(0);
   const [minHeight, setMinHeight] = useState(maxHeight / 2);
   const [contentHeight, setContentHeight] = useState(0);
-
-  const padding = 50;
 
   useEffect(() => {
     if (props.isOpen) {
@@ -156,7 +156,9 @@ export default function BottomSheet(props: Readonly<Props>) {
         >
           <div className="w-full h-1 bg-white rounded-full" />
         </button>
-        <div ref={sheetContentRef} className="min-h-0 flex flex-col">{props.children}</div>
+        <div ref={sheetContentRef} className="min-h-0 flex flex-col">
+          {props.children}
+        </div>
       </div>
     </div>
   );
