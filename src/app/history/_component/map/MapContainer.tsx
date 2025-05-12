@@ -193,7 +193,7 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
             onClick={(e) => e.stopPropagation()}
             className="flex flex-col h-full max-h-96 p-4 rounded-b-2xl bg-zinc-800/90 overflow-hidden"
           >
-            <div className="min-h-0 h-full overflow-y-auto scrollable-div">
+            <div className="min-h-0 h-full overflow-y-auto scrollable">
               <SearchList
                 loadingList={isLoadingSearchResult}
                 list={searchResult}

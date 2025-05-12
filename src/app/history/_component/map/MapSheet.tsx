@@ -38,7 +38,10 @@ export default function MapSheet(props: Readonly<Props>) {
   }, [props.isOpen]);
 
   function pickLocation() {
-    if (location) props.onPick(location);
+    if (location) {
+      props.onPick(location);
+      props.close();
+    }
   }
 
   return (

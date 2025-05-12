@@ -10,6 +10,9 @@ import LocationPicker from "./form/LocationPicker";
 import ImagesPicker from "./form/ImagesPicker";
 import AmountInput from "./form/AmountInput";
 import MapSheet from "./map/MapSheet";
+import LocationIcon from "@/component/icon/LocationIcon";
+import useWindowInnerSize from "@/hook/useWindowInnerSize";
+import compressImage from "@/util/compressImage";
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +21,9 @@ interface Props {
 }
 
 export default function HistoryFormSheet(props: Readonly<Props>) {
+  const { width: maxWidth, height: maxHeight } = useWindowInnerSize();
+  const attributeMaxHeight = maxHeight * 0.9 - 288;
+
   const title = useMemo(
     () => (props.history ? "Edit History" : "Add History"),
     [props.history]
@@ -46,30 +52,40 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   const [isShowMap, setIsShowMap] = useState(false);
 
   useEffect(() => {
-    setValue(props.history ?? {});
-  }, [props.history]);
+    if (props.isOpen) {
+      setValue(props.history ?? {});
+      setFormImageList([]);
+    }
+  }, [props.isOpen, props.history]);
 
   useEffect(() => {
-    setFormImagePreviews((prev) => {
-      const previews: typeof prev = [];
+    let isCancelled = false;
 
-      prev.forEach((image) => {
-        const sourceIdx = formImageList.findIndex((s) => s.id === image.id);
-        if (sourceIdx >= 0) {
-          previews.push(image);
-        }
-      });
+    const updatePreviews = async () => {
+      const previews: { id: string; url: string; name: string }[] = [];
 
-      formImageList.forEach((image) => {
-        const prevIdx = previews.findIndex((p) => p.id === image.id);
-        if (prevIdx === -1) {
-          const url = URL.createObjectURL(image.file);
+      for (const image of formImageList) {
+        if (isCancelled) break;
+        const existing = formImagePreviews.find((p) => p.id === image.id);
+        if (existing) {
+          previews.push(existing);
+        } else {
+          const compressed = await compressImage(image.file, { maxWidth });
+          const url = URL.createObjectURL(compressed);
           previews.push({ id: image.id, url, name: image.file.name });
         }
-      });
+      }
 
-      return previews;
-    });
+      if (!isCancelled) {
+        setFormImagePreviews(previews);
+      }
+    };
+
+    updatePreviews();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [formImageList]);
 
   function removeFormImage(
@@ -87,6 +103,15 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   }) {
     setSelectedImagePreview(image);
     setIsShowImagePreview(true);
+  }
+
+  function removeLocation() {
+    setValue((prev) => ({
+      ...prev,
+      location: undefined,
+      location_name: undefined,
+      location_display_name: undefined,
+    }));
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -150,33 +175,60 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </div>
           </div>
 
-          {!!formImagePreviews.length && (
-            <div>
-              <p className="font-bold">Images</p>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {formImagePreviews.map((image) => (
-                  <div
-                    key={image.url}
-                    onClick={() => selectImagePreview(image)}
-                    className="relative w-16 h-16 "
-                  >
-                    <img
-                      src={image.url}
-                      alt={image.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => removeFormImage(e, image.id)}
-                      className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
+          <div
+            className="space-y-4 overflow-y-auto scrollable"
+            style={{ maxHeight: attributeMaxHeight }}
+          >
+            {!!formImagePreviews.length && (
+              <div>
+                <p className="font-bold">Images</p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {formImagePreviews.map((image) => (
+                    <div
+                      key={image.url}
+                      onClick={() => selectImagePreview(image)}
+                      className="relative w-16 h-16 "
                     >
-                      <CloseIcon />
-                    </button>
-                  </div>
-                ))}
+                      <img
+                        src={image.url}
+                        alt={image.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => removeFormImage(e, image.id)}
+                        className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
+                      >
+                        <CloseIcon />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {!!value.location && (
+              <div>
+                <p className="font-bold">Location</p>
+                <div className="mt-1 flex gap-x-1 items-center">
+                  <div className="text-lg">
+                    <LocationIcon />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold">{value.location_name}</p>
+                    <p className="text-xs">{value.location_display_name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeLocation}
+                    className="text-base"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <Button type="submit">Add</Button>
         </form>

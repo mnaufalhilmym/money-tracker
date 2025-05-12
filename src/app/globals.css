@@ -9,11 +9,11 @@
   -moz-appearance: textfield;
 }
 
-.scrollable-div::-webkit-scrollbar {
+.scrollable::-webkit-scrollbar {
   width: 8px;
 }
 
-.scrollable-div::-webkit-scrollbar-thumb {
+.scrollable::-webkit-scrollbar-thumb {
   background-color: darkgray;
   border-radius: 4px;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import useWindowInnerSize from "@/hook/useWindowInnerSize";
 import { ReactNode, useEffect, useRef, useState } from "react";
 
 interface Props {
@@ -16,7 +17,7 @@ export default function BottomSheet(props: Readonly<Props>) {
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [translateY, setTranslateY] = useState(0);
-  const [maxHeight, setMaxHeight] = useState(0);
+  const maxHeight = useWindowInnerSize().height * 0.9;
   const [minHeight, setMinHeight] = useState(maxHeight / 2);
   const [contentHeight, setContentHeight] = useState(0);
 
@@ -32,11 +33,6 @@ export default function BottomSheet(props: Readonly<Props>) {
       document.body.style.overscrollBehaviorY = "";
     };
   }, [props.isOpen]);
-
-  // full opened height
-  useEffect(() => {
-    setMaxHeight(window.innerHeight * 0.9);
-  }, []);
 
   // minimum visible height when closed
   useEffect(() => {
