@@ -119,9 +119,10 @@ export default function History() {
             <p className="font-bold text-lg">{dateKey}</p>
             <div className="mt-2 space-y-2">
               {items.map((i) => (
-                <div
+                <button
                   key={i.id}
-                  className="flex items-center gap-x-2 justify-between"
+                  onClick={() => setEditHistory(i)}
+                  className="w-full flex items-center gap-x-2 justify-between text-left"
                 >
                   <div className="flex items-center gap-x-2">
                     <div className="w-8 h-8 bg-red-500 rounded-full" />
@@ -133,7 +134,7 @@ export default function History() {
                   <div>
                     <p className="font-bold">{i.amount}</p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

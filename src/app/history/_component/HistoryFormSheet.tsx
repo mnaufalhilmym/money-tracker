@@ -172,6 +172,10 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             <input
               type="text"
               placeholder="Title"
+              value={value.title ?? ""}
+              onChange={(e) =>
+                setValue((prev) => ({ ...prev, title: e.target.value }))
+              }
               className="outline-none w-full text-center"
             />
             <div className="flex items-center gap-x-2">

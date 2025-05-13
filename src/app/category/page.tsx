@@ -112,7 +112,7 @@ export default function Categories() {
               <button
                 key={c.id}
                 onClick={() => setEditCategory(c)}
-                className="flex items-center gap-x-2"
+                className="w-full flex items-center gap-x-2"
               >
                 <div
                   className="w-8 h-8 rounded-full"
@@ -130,7 +130,7 @@ export default function Categories() {
               <button
                 key={c.id}
                 onClick={() => setEditCategory(c)}
-                className="flex items-center gap-x-2"
+                className="w-full flex items-center gap-x-2"
               >
                 <div
                   className="w-8 h-8 rounded-full"

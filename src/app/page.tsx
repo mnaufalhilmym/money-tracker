@@ -1,16 +1,24 @@
 import Button from "@/component/button/Button";
 import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
-import OptionsIcon from "@/component/icon/OptionsIcon";
+import OpenIcon from "@/component/icon/OpenIcon";
 import Link from "next/link";
+import HomeHeader from "./_component/HomeHeader";
+import serverApiCall from "@/util/fetch";
 
-export default function Home() {
+async function getData() {
+  const response = await serverApiCall("/api/auth/google");
+
+  const data: AuthResponse = await response.json();
+
+  return data;
+}
+
+export default async function Home() {
+  const data = await getData();
+
   return (
     <>
-      <div>
-        <span className="text-xs">Good Morning,</span>
-        <br />
-        <span className="font-bold">Risa Wahyu Widyastuti</span>
-      </div>
+      <HomeHeader name={data.name} />
 
       <div className="flex p-1 mt-4 rounded-full bg-white/20 border border-white/20">
         <button
@@ -89,7 +97,7 @@ export default function Home() {
         <div className="flex items-center justify-between font-bold">
           <p className="text-lg">Spending categories</p>
           <Link href="/category" className="text-xl">
-            <OptionsIcon />
+            <OpenIcon />
           </Link>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-4">
@@ -155,7 +163,7 @@ export default function Home() {
         <div className="flex items-center justify-between font-bold">
           <p className="text-lg">History</p>
           <Link href="/history" className="text-xl">
-            <OptionsIcon />
+            <OpenIcon />
           </Link>
         </div>
         <div className="mt-2 space-y-2">
