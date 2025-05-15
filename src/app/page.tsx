@@ -3,10 +3,17 @@ import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
 import OpenIcon from "@/component/icon/OpenIcon";
 import Link from "next/link";
 import HomeHeader from "./_component/HomeHeader";
-import serverApiCall from "@/util/fetch";
+import serverInternalApiCall from "@/util/fetch";
+import { redirect, RedirectType } from "next/navigation";
+import { serverComponentRemoveTokenCookie } from "@/util/api/removeTokenCookie";
 
-async function getData() {
-  const response = await serverApiCall("/api/auth/google");
+async function getAuthData() {
+  const response = await serverInternalApiCall("/api/auth/google");
+
+  if (!response.ok) {
+    serverComponentRemoveTokenCookie();
+    redirect("/signin", RedirectType.replace);
+  }
 
   const data: AuthResponse = await response.json();
 
@@ -14,11 +21,11 @@ async function getData() {
 }
 
 export default async function Home() {
-  const data = await getData();
+  const authData = await getAuthData();
 
   return (
     <>
-      <HomeHeader name={data.name} />
+      <HomeHeader name={authData.name} />
 
       <div className="flex p-1 mt-4 rounded-full bg-white/20 border border-white/20">
         <button

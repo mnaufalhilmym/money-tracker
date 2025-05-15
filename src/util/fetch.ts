@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 
-export default async function serverApiCall(url: string, init?: RequestInit) {
+export default async function serverInternalApiCall(
+  url: string,
+  init?: RequestInit
+) {
   const clientCookie = (await headers()).get("cookie");
 
   const clientHeader: HeadersInit = {

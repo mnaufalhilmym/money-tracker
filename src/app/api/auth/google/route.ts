@@ -1,3 +1,4 @@
+import { apiRemoveTokenCookie } from "@/util/api/removeTokenCookie";
 import { OAuth2Client } from "google-auth-library";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -54,16 +55,18 @@ async function processToken(token?: string) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: payload.exp,
       path: "/",
     });
 
     return response;
   } catch (error) {
     console.error("Error verifying Google token:", error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Token verification failed" },
       { status: 401 }
     );
+    apiRemoveTokenCookie(response);
+    return response;
   }
 }
