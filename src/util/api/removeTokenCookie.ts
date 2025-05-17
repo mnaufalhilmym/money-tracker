@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export function apiRemoveTokenCookie(response: NextResponse) {
+export default function removeTokenCookie(response: NextResponse) {
   response.cookies.set("money_tracker_token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

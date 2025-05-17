@@ -1,9 +1,8 @@
+"use server";
+
 import { headers } from "next/headers";
 
-export default async function serverInternalApiCall(
-  url: string,
-  init?: RequestInit
-) {
+export async function serverInternalApiCall(url: string, init?: RequestInit) {
   const clientCookie = (await headers()).get("cookie");
 
   const clientHeader: HeadersInit = {
@@ -11,10 +10,8 @@ export default async function serverInternalApiCall(
     ...(clientCookie ? { cookie: clientCookie } : {}),
   };
 
-  const response = await fetch(new URL(url, process.env.NEXT_PUBLIC_SITE_URL), {
+  return await fetch(new URL(url, process.env.NEXT_PUBLIC_SITE_URL), {
     ...init,
     headers: clientHeader,
   });
-
-  return response;
 }

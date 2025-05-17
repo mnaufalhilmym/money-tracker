@@ -5,61 +5,43 @@ import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
 import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import WalletFormSheet from "./_component/WalletFormSheet";
 import WalletFilterSheet from "./_component/WalletFilterSheet";
+import { clientInternalApiCall } from "@/util/fetch/fromClient";
+
+async function getWallets() {
+  const response = await clientInternalApiCall("/api/wallet");
+
+  const data = await response.json();
+
+  return data;
+}
 
 export default function Wallets() {
+  const [wallets, setWallets] = useState<WalletI[]>([]);
+
   const [isOpenAddSheet, setIsOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
   const [types, setTypes] = useState({ spending: true, saving: true });
   const [editWallet, setEditWallet] = useState<WalletI>();
 
-  const wallets: WalletI[] = [
-    {
-      id: "1",
-      name: "Bank Saqu",
-      type: "spending",
-    },
-    {
-      id: "2",
-      name: "Bank Jago",
-      type: "spending",
-    },
-    {
-      id: "3",
-      name: "GoPay",
-      type: "spending",
-    },
-    {
-      id: "4",
-      name: "AstraPay",
-      type: "spending",
-    },
-    {
-      id: "5",
-      name: "Bareksa",
-      type: "saving",
-    },
-    {
-      id: "6",
-      name: "Bibit",
-      type: "saving",
-    },
-    {
-      id: "7",
-      name: "Pluang",
-      type: "saving",
-    },
-    {
-      id: "8",
-      name: "Pegadaian",
-      type: "saving",
-    },
-  ];
+  useEffect(() => {
+    refreshWallets();
+  }, []);
 
-  const spendingWallets = wallets.filter((w) => w.type === "spending");
-  const savingWallets = wallets.filter((w) => w.type === "saving");
+  const spendingWallets = useMemo(() => {
+    return wallets.filter((w) => w.type_name === "SPENDING");
+  }, [wallets]);
+
+  const savingWallets = useMemo(() => {
+    return wallets.filter((w) => w.type_name === "SAVING");
+  }, [wallets]);
+
+  async function refreshWallets() {
+    const data = await getWallets();
+    setWallets(data);
+  }
 
   return (
     <>
@@ -96,34 +78,38 @@ export default function Wallets() {
       </div>
 
       <div className="mt-4 space-y-4">
-        <div>
-          <p className="font-bold text-lg">Spending</p>
-          <div className="mt-2 space-y-2">
-            {spendingWallets.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => setEditWallet(w)}
-                className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
-              >
-                <p>{w.name}</p>
-              </button>
-            ))}
+        {!!spendingWallets.length && (
+          <div>
+            <p className="font-bold text-lg">Spending</p>
+            <div className="mt-2 space-y-2">
+              {spendingWallets.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => setEditWallet(w)}
+                  className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
+                >
+                  <p>{w.name}</p>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-        <div>
-          <p className="font-bold text-lg">Saving</p>
-          <div className="mt-2 space-y-2">
-            {savingWallets.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => setEditWallet(w)}
-                className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
-              >
-                <p>{w.name}</p>
-              </button>
-            ))}
+        )}
+        {!!savingWallets.length && (
+          <div>
+            <p className="font-bold text-lg">Saving</p>
+            <div className="mt-2 space-y-2">
+              {savingWallets.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => setEditWallet(w)}
+                  className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
+                >
+                  <p>{w.name}</p>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <WalletFormSheet
@@ -133,6 +119,7 @@ export default function Wallets() {
           if (editWallet) setEditWallet(undefined);
         }}
         wallet={editWallet}
+        refreshWallets={refreshWallets}
       />
 
       <WalletFilterSheet

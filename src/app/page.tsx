@@ -1,9 +1,9 @@
 import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
 import HomeHeader from "./_component/HomeHeader";
-import serverInternalApiCall from "@/util/fetch";
 import History from "./_component/History";
 import Categories from "./_component/Categories";
 import Wallets from "./_component/Wallets";
+import { serverInternalApiCall } from "@/util/fetch/fromServer";
 
 async function getAuthData() {
   const response = await serverInternalApiCall("/api/auth/google");

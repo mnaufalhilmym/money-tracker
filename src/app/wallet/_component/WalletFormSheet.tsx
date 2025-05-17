@@ -4,11 +4,13 @@ import BottomSheet from "@/component/sheet/BottomSheet";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import ConfirmDeleteWalletSheet from "./ConfirmDeleteWalletSheet";
 import RadioInput from "@/component/input/RadioInput";
+import { clientInternalApiCall } from "@/util/fetch/fromClient";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
   wallet?: WalletI;
+  refreshWallets: () => void;
 }
 
 export default function WalletFormSheet(props: Readonly<Props>) {
@@ -16,17 +18,26 @@ export default function WalletFormSheet(props: Readonly<Props>) {
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
 
   useEffect(() => {
-    setValue(props.wallet ?? {});
-  }, [props.wallet]);
+    if (props.isOpen) {
+      setValue(props.wallet ?? {});
+    }
+  }, [props.isOpen, props.wallet]);
 
   const title = useMemo(
     () => (props.wallet ? "Edit Wallet" : "Add Wallet"),
     [props.wallet]
   );
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    await clientInternalApiCall("/api/wallet", {
+      method: "POST",
+      body: JSON.stringify(value),
+    });
+
     props.close();
+    props.refreshWallets();
   }
 
   return (
@@ -65,17 +76,25 @@ export default function WalletFormSheet(props: Readonly<Props>) {
             <p className="font-bold">Type</p>
             <div className="mt-0.5 flex items-center gap-x-8">
               <RadioInput
-                checked={value.type === "spending"}
+                checked={value.type_id === 1}
                 onClick={() =>
-                  setValue((prev) => ({ ...prev, type: "spending" }))
+                  setValue((prev) => ({
+                    ...prev,
+                    type_id: 1,
+                    type_name: "SPENDING",
+                  }))
                 }
               >
                 Spending
               </RadioInput>
               <RadioInput
-                checked={value.type === "saving"}
+                checked={value.type_id === 2}
                 onClick={() =>
-                  setValue((prev) => ({ ...prev, type: "saving" }))
+                  setValue((prev) => ({
+                    ...prev,
+                    type_id: 2,
+                    type_name: "SAVING",
+                  }))
                 }
               >
                 Saving

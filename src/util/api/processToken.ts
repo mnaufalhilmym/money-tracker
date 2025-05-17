@@ -23,8 +23,8 @@ export default async function processToken(token?: string) {
 
   const { sub, email, name, picture, exp } = payload;
 
-  const response = {
-    googleId: sub,
+  const response: AuthResponse = {
+    userId: sub,
     email,
     name,
     picture,

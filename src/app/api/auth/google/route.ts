@@ -1,13 +1,10 @@
+import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
-import { apiRemoveTokenCookie } from "@/util/api/removeTokenCookie";
-import { cookies } from "next/headers";
+import removeTokenCookie from "@/util/api/removeTokenCookie";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  request.cookies.get("money_tracker_token");
-  const cookieStore = await cookies();
-  const tokenCookie = cookieStore.get("money_tracker_token");
-  const token = tokenCookie?.value;
+  const token = getTokenCookie(request);
 
   try {
     const tokenData = await processToken(token);
@@ -23,7 +20,7 @@ export async function GET(request: NextRequest) {
       { error: "Token verification failed" },
       { status: 401 }
     );
-    apiRemoveTokenCookie(response);
+    removeTokenCookie(response);
     return response;
   }
 }
@@ -41,11 +38,14 @@ export async function POST(request: NextRequest) {
       picture: tokenData.picture,
     });
 
+    const currentTime = Math.floor(Date.now() / 1000);
+    const secsUntilExpire = tokenData.exp - currentTime;
+
     response.cookies.set("money_tracker_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: tokenData.exp,
+      maxAge: secsUntilExpire,
       path: "/",
     });
 

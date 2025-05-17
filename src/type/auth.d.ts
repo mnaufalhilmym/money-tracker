@@ -1,6 +1,7 @@
 interface AuthResponse {
-  googleId: string;
-  email: string;
-  name: string;
-  picture: string;
+  userId: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+  exp: number;
 }
