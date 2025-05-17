@@ -5,11 +5,13 @@ import { COLORS } from "@/constant/color";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import ConfirmDeleteCategorySheet from "./ConfirmDeleteCategorySheet";
 import RadioInput from "@/component/input/RadioInput";
+import { clientInternalApiCall } from "@/util/fetch/fromClient";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
   category?: CategoryI;
+  refreshCategories: () => void;
 }
 
 export default function CategoryFormSheet(props: Readonly<Props>) {
@@ -17,17 +19,42 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
 
   useEffect(() => {
-    setValue(props.category ?? {});
-  }, [props.category]);
+    if (props.isOpen) {
+      setValue(props.category ?? {});
+    }
+  }, [props.isOpen, props.category]);
 
   const title = useMemo(
     () => (props.category ? "Edit Category" : "Add Category"),
     [props.category]
   );
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (!props.category) {
+      await clientInternalApiCall("/api/category", undefined, {
+        method: "POST",
+        body: JSON.stringify(value),
+      });
+    } else {
+      await clientInternalApiCall(
+        "/api/category/" + props.category.id,
+        undefined,
+        {
+          method: "PUT",
+          body: JSON.stringify(value),
+        }
+      );
+    }
+
     props.close();
+    props.refreshCategories();
+  }
+
+  function afterDelete() {
+    props.close();
+    props.refreshCategories();
   }
 
   return (
@@ -87,17 +114,25 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
             <p className="font-bold">Type</p>
             <div className="mt-0.5 flex items-center gap-x-8">
               <RadioInput
-                checked={value.type === "spending"}
+                checked={value.type_id === 1}
                 onClick={() =>
-                  setValue((prev) => ({ ...prev, type: "spending" }))
+                  setValue((prev) => ({
+                    ...prev,
+                    type_id: 1,
+                    type_name: "SPENDING",
+                  }))
                 }
               >
                 Spending
               </RadioInput>
               <RadioInput
-                checked={value.type === "saving"}
+                checked={value.type_id === 2}
                 onClick={() =>
-                  setValue((prev) => ({ ...prev, type: "saving" }))
+                  setValue((prev) => ({
+                    ...prev,
+                    type_id: 2,
+                    type_name: "SAVING",
+                  }))
                 }
               >
                 Saving
@@ -113,6 +148,7 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
         <ConfirmDeleteCategorySheet
           isOpen={isShowConfirmDelete}
           close={() => setIsShowConfirmDelete(false)}
+          afterDelete={afterDelete}
           category={props.category}
         />
       )}

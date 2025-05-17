@@ -1,15 +1,22 @@
 import Button from "@/component/button/Button";
 import BottomSheet from "@/component/sheet/BottomSheet";
+import { clientInternalApiCall } from "@/util/fetch/fromClient";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
+  afterDelete: () => void;
   wallet: WalletI;
 }
 
 export default function ConfirmDeleteWalletSheet(props: Readonly<Props>) {
-  function remove() {
+  async function remove() {
+    await clientInternalApiCall("/api/wallet/" + props.wallet.id, undefined, {
+      method: "DELETE",
+    });
+
     props.close();
+    props.afterDelete();
   }
 
   return (

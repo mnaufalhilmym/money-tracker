@@ -1,7 +1,7 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import createWalletsTableIfNotExists from "../../_lib/db/table/wallets";
+import createCategoriesTableIfNotExists from "../../_lib/db/table/categories";
 import pool from "../../_lib/db/db";
 
 export async function GET(
@@ -15,22 +15,22 @@ export async function GET(
 
     const id = params.id;
 
-    await createWalletsTableIfNotExists();
+    await createCategoriesTableIfNotExists();
 
-    const wallet = await pool.query<WalletI>(
-      "SELECT w.id, w.user_id, w.name, w.type_id, t.name" +
-        " FROM wallets w" +
-        " JOIN types t ON t.id = w.type_id" +
-        " WHERE w.deleted_at IS NULL AND w.id = $1 AND w.user_id = $2",
+    const category = await pool.query<CategoryI>(
+      "SELECT c.id, c.user_id, c.name, c.color, c.type_id, t.name" +
+        " FROM categories c" +
+        " JOIN types t ON t.id = c.type_id" +
+        " WHERE w.deleted_at IS NULL AND c.id = $1 AND c.user_id = $2",
       [id, tokenData.userId]
     );
 
-    return NextResponse.json(wallet.rows[0]);
+    return NextResponse.json(category.rows[0]);
   } catch (error) {
-    console.error("Failed to get a wallet:", error);
+    console.error("Failed to get a category:", error);
     return NextResponse.json(
       {
-        error: "Failed to get a wallet",
+        error: "Failed to get a category",
       },
       { status: 500 }
     );
@@ -48,37 +48,37 @@ export async function PUT(
 
     const id = params.id;
 
-    const { name, type_id } = await request.json();
+    const { name, color, type_id } = await request.json();
 
-    await createWalletsTableIfNotExists();
+    await createCategoriesTableIfNotExists();
 
     const client = await pool.connect();
 
     try {
       await client.query(
-        "UPDATE wallets SET name = $1, type_id = $2 WHERE deleted_at IS NULL AND id = $3 AND user_id = $4",
-        [name, type_id, id, tokenData.userId]
+        "UPDATE categories SET name = $1, color = $2, type_id = $3 WHERE deleted_at IS NULL AND id = $4 AND user_id = $5",
+        [name, color, type_id, id, tokenData.userId]
       );
 
-      const wallet = await client.query<WalletI>(
-        "SELECT w.id, w.user_id, w.name, w.type_id, t.name" +
-          " FROM wallets w" +
-          " JOIN types t ON t.id = w.type_id" +
-          " WHERE w.deleted_at IS NULL AND w.id = $1 AND w.user_id = $2",
+      const category = await client.query<CategoryI>(
+        "SELECT c.id id, c.user_id user_id, c.name name, c.color color, c.type_id type_id, t.name type_name" +
+          " FROM categories c" +
+          " JOIN types t ON t.id = c.type_id" +
+          " WHERE c.deleted_at IS NULL AND c.id = $1 AND c.user_id = $2",
         [id, tokenData.userId]
       );
 
-      return NextResponse.json(wallet.rows[0]);
+      return NextResponse.json(category.rows[0]);
     } catch {
       client.query("ROLLBACK");
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("Failed to update a wallet:", error);
+    console.error("Failed to update a category:", error);
     return NextResponse.json(
       {
-        error: "Failed to update a wallet",
+        error: "Failed to update a category",
       },
       { status: 500 }
     );
@@ -96,19 +96,19 @@ export async function DELETE(
 
     const id = params.id;
 
-    await createWalletsTableIfNotExists();
+    await createCategoriesTableIfNotExists();
 
     await pool.query(
-      "UPDATE wallets SET deleted_at = NOW() WHERE id = $1 AND user_id = $2",
+      "UPDATE categories SET deleted_at = NOW() WHERE id = $1 AND user_id = $2",
       [id, tokenData.userId]
     );
 
     return NextResponse.json({ id });
   } catch (error) {
-    console.error("Failed to delete a wallet:", error);
+    console.error("Failed to delete a category:", error);
     return NextResponse.json(
       {
-        error: "Failed to delete a wallet",
+        error: "Failed to delete a category",
       },
       { status: 500 }
     );

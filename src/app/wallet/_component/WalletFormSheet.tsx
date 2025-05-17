@@ -31,11 +31,23 @@ export default function WalletFormSheet(props: Readonly<Props>) {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    await clientInternalApiCall("/api/wallet", {
-      method: "POST",
-      body: JSON.stringify(value),
-    });
+    if (!props.wallet) {
+      await clientInternalApiCall("/api/wallet", undefined, {
+        method: "POST",
+        body: JSON.stringify(value),
+      });
+    } else {
+      await clientInternalApiCall("/api/wallet/" + props.wallet.id, undefined, {
+        method: "PUT",
+        body: JSON.stringify(value),
+      });
+    }
 
+    props.close();
+    props.refreshWallets();
+  }
+
+  function afterDelete() {
     props.close();
     props.refreshWallets();
   }
@@ -110,6 +122,7 @@ export default function WalletFormSheet(props: Readonly<Props>) {
         <ConfirmDeleteWalletSheet
           isOpen={isShowConfirmDelete}
           close={() => setIsShowConfirmDelete(false)}
+          afterDelete={afterDelete}
           wallet={props.wallet}
         />
       )}

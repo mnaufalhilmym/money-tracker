@@ -32,15 +32,27 @@ export default async function Home() {
         </button>
       </div>
 
-      <div className="flex items-center gap-x-2 mt-4">
-        <p>Category:</p>
-        <button
-          type="button"
-          className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
-        >
-          <span>All</span>
-          <ChevronDownIcon />
-        </button>
+      <div className="mt-4 flex items-center gap-x-4">
+        <div className="flex items-center gap-x-2">
+          <p>Wallet:</p>
+          <button
+            type="button"
+            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+          >
+            <span>All</span>
+            <ChevronDownIcon />
+          </button>
+        </div>
+        <div className="flex items-center gap-x-2">
+          <p>Category:</p>
+          <button
+            type="button"
+            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+          >
+            <span>All</span>
+            <ChevronDownIcon />
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-x-4 mt-4">

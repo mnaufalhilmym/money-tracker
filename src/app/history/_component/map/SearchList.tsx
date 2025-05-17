@@ -1,5 +1,6 @@
-import LoadingIcon from "@/component/icon/LoadingIcon";
 import LocationIcon from "@/component/icon/LocationIcon";
+import Loading from "@/component/loading/Loading";
+import NotFound from "@/component/notFound/NotFound";
 
 interface Props {
   loadingList: boolean;
@@ -14,23 +15,11 @@ interface Props {
 
 export default function SearchList(props: Readonly<Props>) {
   if (props.loadingList) {
-    return (
-      <div className="h-full flex items-center justify-center gap-x-2">
-        <div className="text-2xl">
-          <LoadingIcon />
-        </div>
-        <p className="text-base">Loading...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (!props.loadingList && !props.list.length) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center gap-y-0.5">
-        <p className="text-2xl">¯\\_(ツ)_/¯</p>
-        <p className="text-base">Not found</p>
-      </div>
-    );
+    return <NotFound />;
   }
 
   return (

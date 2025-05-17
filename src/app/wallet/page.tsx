@@ -9,38 +9,72 @@ import { useEffect, useMemo, useState } from "react";
 import WalletFormSheet from "./_component/WalletFormSheet";
 import WalletFilterSheet from "./_component/WalletFilterSheet";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import Loading from "@/component/loading/Loading";
+import NotFound from "@/component/notFound/NotFound";
+import useDebounce from "@/hook/useDebounce";
 
-async function getWallets() {
-  const response = await clientInternalApiCall("/api/wallet");
+async function getWallets(params?: { search?: string; filter?: number[] }) {
+  const queryParams: { key: string; value: string | number }[] = [];
+  if (params?.search) {
+    queryParams.push({ key: "s", value: params.search });
+  }
+  if (params?.filter && params.filter.length > 0) {
+    params.filter.forEach((filter) => {
+      queryParams.push({ key: "f", value: filter });
+    });
+  }
 
-  const data = await response.json();
+  const response = await clientInternalApiCall("/api/wallet", queryParams);
+
+  const data: WalletI[] = await response.json();
 
   return data;
 }
 
 export default function Wallets() {
-  const [wallets, setWallets] = useState<WalletI[]>([]);
+  const [wallets, setWallets] = useState<{
+    data: WalletI[];
+    isLoading: boolean;
+  }>({ data: [], isLoading: true });
 
   const [isOpenAddSheet, setIsOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
   const [types, setTypes] = useState({ spending: true, saving: true });
   const [editWallet, setEditWallet] = useState<WalletI>();
 
+  const [search, setSearch] = useState("");
+  const debounceSearch = useDebounce(search, 500);
+
   useEffect(() => {
-    refreshWallets();
-  }, []);
+    const debounceSearchTrim = debounceSearch.trim();
+    const search = debounceSearchTrim || undefined;
+
+    const filter: number[] = [];
+    if (types.spending) {
+      filter.push(1);
+    }
+    if (types.saving) {
+      filter.push(2);
+    }
+
+    refreshWallets({ search, filter });
+  }, [debounceSearch, types]);
 
   const spendingWallets = useMemo(() => {
-    return wallets.filter((w) => w.type_name === "SPENDING");
+    return wallets.data.filter((w) => w.type_id === 1);
   }, [wallets]);
 
   const savingWallets = useMemo(() => {
-    return wallets.filter((w) => w.type_name === "SAVING");
+    return wallets.data.filter((w) => w.type_id === 2);
   }, [wallets]);
 
-  async function refreshWallets() {
-    const data = await getWallets();
-    setWallets(data);
+  async function refreshWallets(params?: {
+    search?: string;
+    filter?: number[];
+  }) {
+    setWallets((prev) => ({ ...prev, isLoading: true }));
+    const data = await getWallets(params);
+    setWallets({ data, isLoading: false });
   }
 
   return (
@@ -65,6 +99,7 @@ export default function Wallets() {
           <input
             type="text"
             placeholder="Search wallet"
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full outline-none"
           />
         </div>
@@ -78,37 +113,44 @@ export default function Wallets() {
       </div>
 
       <div className="mt-4 space-y-4">
-        {!!spendingWallets.length && (
-          <div>
-            <p className="font-bold text-lg">Spending</p>
-            <div className="mt-2 space-y-2">
-              {spendingWallets.map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => setEditWallet(w)}
-                  className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
-                >
-                  <p>{w.name}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {!!savingWallets.length && (
-          <div>
-            <p className="font-bold text-lg">Saving</p>
-            <div className="mt-2 space-y-2">
-              {savingWallets.map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => setEditWallet(w)}
-                  className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
-                >
-                  <p>{w.name}</p>
-                </button>
-              ))}
-            </div>
-          </div>
+        {!wallets.isLoading ? (
+          <>
+            {!!spendingWallets.length && (
+              <div>
+                <p className="font-bold text-lg">Spending</p>
+                <div className="mt-2 space-y-2">
+                  {spendingWallets.map((w) => (
+                    <button
+                      key={w.id}
+                      onClick={() => setEditWallet(w)}
+                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
+                    >
+                      <p>{w.name}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!!savingWallets.length && (
+              <div>
+                <p className="font-bold text-lg">Saving</p>
+                <div className="mt-2 space-y-2">
+                  {savingWallets.map((w) => (
+                    <button
+                      key={w.id}
+                      onClick={() => setEditWallet(w)}
+                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
+                    >
+                      <p>{w.name}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!spendingWallets.length && !savingWallets.length && <NotFound />}
+          </>
+        ) : (
+          <Loading />
         )}
       </div>
 

@@ -5,6 +5,8 @@ let hasRun = false;
 export default async function createTypesTableIfNotExists() {
   if (hasRun) return;
 
+  console.info("Running createTypesTableIfNotExists");
+
   await pool.query(
     "CREATE TABLE IF NOT EXISTS types (" +
       "id SERIAL PRIMARY KEY," +

@@ -1,8 +1,8 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
+import createCategoriesTableIfNotExists from "../_lib/db/table/categories";
 import pool from "../_lib/db/db";
-import createWalletsTableIfNotExists from "../_lib/db/table/wallets";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -15,17 +15,17 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("s");
     const filters = searchParams.getAll("f");
 
-    await createWalletsTableIfNotExists();
+    await createCategoriesTableIfNotExists();
 
     let querySql =
-      "SELECT w.id id, w.user_id user_id, w.name name, w.type_id type_id, t.name type_name" +
-      " FROM wallets w" +
-      " JOIN types t ON t.id = w.type_id" +
-      " WHERE w.deleted_at IS NULL AND w.user_id = $1";
+      "SELECT c.id id, c.user_id user_id, c.name name, c.color color, c.type_id type_id, t.name type_name" +
+      " FROM categories c" +
+      " JOIN types t ON t.id = c.type_id" +
+      " WHERE c.deleted_at IS NULL AND c.user_id = $1";
     const queryParams = [tokenData.userId];
     if (search) {
       queryParams.push(`%${search}%`);
-      querySql += ` AND w.name ILIKE $${queryParams.length}`;
+      querySql += ` AND c.name ILIKE $${queryParams.length}`;
     }
 
     if (filters.length > 0) {
@@ -34,17 +34,17 @@ export async function GET(request: NextRequest) {
         queryParams.push(filter);
         queryPlaceholder.push(`$${queryParams.length}`);
       });
-      querySql += ` AND t.id IN (${queryPlaceholder.join(", ")})`;
+      querySql += ` AND c.type_id IN (${queryPlaceholder.join(", ")})`;
     }
 
-    const wallets = await pool.query<WalletI>(querySql, queryParams);
+    const categories = await pool.query<CategoryI>(querySql, queryParams);
 
-    return NextResponse.json(wallets.rows);
+    return NextResponse.json(categories.rows);
   } catch (error) {
-    console.error("Failed to get many wallets:", error);
+    console.error("Failed to get many categories:", error);
     return NextResponse.json(
       {
-        error: "Failed to get many wallets",
+        error: "Failed to get many categories",
       },
       { status: 500 }
     );
@@ -57,31 +57,31 @@ export async function POST(request: NextRequest) {
   try {
     const tokenData = await processToken(token);
 
-    const { name, type_id } = await request.json();
+    const { name, color, type_id } = await request.json();
 
-    await createWalletsTableIfNotExists();
+    await createCategoriesTableIfNotExists();
 
     const client = await pool.connect();
 
     try {
       const insertQuery = await client.query<{ id: number }>(
-        "INSERT INTO wallets (name, user_id, type_id) VALUES ($1, $2, $3) RETURNING id",
-        [name, tokenData.userId, type_id]
+        "INSERT INTO categories (user_id, name, color, type_id) VALUES ($1, $2, $3, $4) RETURNING id",
+        [tokenData.userId, name, color, type_id]
       );
 
       const id = insertQuery.rows[0].id;
 
-      const wallet = await client.query<WalletI>(
-        "SELECT w.id, w.user_id, w.name, w.type_id, t.name" +
-          " FROM wallets w" +
-          " JOIN types t ON t.id = w.type_id" +
-          " WHERE w.deleted_at IS NULL AND w.id = $1 AND w.user_id = $2",
+      const category = await client.query<CategoryI>(
+        "SELECT c.id id, c.user_id user_id, c.name name, c.color color, c.type_id type_id, t.name type_name" +
+          " FROM categories c" +
+          " JOIN types t ON t.id = c.type_id" +
+          " WHERE c.deleted_at IS NULL AND c.id = $1 AND c.user_id = $2",
         [id, tokenData.userId]
       );
 
       client.query("COMMIT");
 
-      return NextResponse.json(wallet.rows[0]);
+      return NextResponse.json(category.rows[0]);
     } catch (error) {
       client.query("ROLLBACK");
       throw error;
@@ -89,10 +89,10 @@ export async function POST(request: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("Failed to add new wallet:", error);
+    console.error("Failed to add new category:", error);
     return NextResponse.json(
       {
-        error: "Failed to add new wallet",
+        error: "Failed to add new category",
       },
       { status: 500 }
     );
