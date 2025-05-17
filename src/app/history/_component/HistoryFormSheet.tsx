@@ -9,12 +9,14 @@ import ImagePreviewSheet from "./ImagePreviewSheet";
 import LocationPicker from "./form/LocationPicker";
 import ImagesPicker from "./form/ImagesPicker";
 import AmountInput from "./form/AmountInput";
-import MapSheet from "./map/MapSheet";
+import MapPickerSheet from "./map/MapPickerSheet";
 import LocationIcon from "@/component/icon/LocationIcon";
 import useWindowInnerSize from "@/hook/useWindowInnerSize";
 import compressImage from "@/util/compressImage";
 import HistoryTypePickerSheet from "./HistoryTypePickerSheet";
 import HistoryCategoryPickerSheet from "./HistoryCategoryPickerSheet";
+import WalletPicker from "./form/WalletPicker";
+import HistoryWalletPickerSheet from "./HistoryWalletPickerSheet";
 
 interface Props {
   isOpen: boolean;
@@ -42,6 +44,8 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
 
   const [isShowCategoryPicker, setIsShowCategoryPicker] = useState(false);
 
+  const [isShowWalletPicker, setIsShowWalletPicker] = useState(false);
+
   const [formImageList, setFormImageList] = useState<
     | {
         id: string;
@@ -58,7 +62,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   }>();
   const [isShowImagePreview, setIsShowImagePreview] = useState(false);
 
-  const [isShowMap, setIsShowMap] = useState(false);
+  const [isShowMapPicker, setIsShowMapPicker] = useState(false);
 
   useEffect(() => {
     if (props.isOpen) {
@@ -179,12 +183,13 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
               className="outline-none w-full text-center"
             />
             <div className="flex items-center gap-x-2">
+              <WalletPicker onClick={() => setIsShowWalletPicker(true)} />
               <ImagesPicker
                 setImageList={(v) =>
                   setFormImageList((prev) => [...prev, ...v])
                 }
               />
-              <LocationPicker onClick={() => setIsShowMap(true)} />
+              <LocationPicker onClick={() => setIsShowMapPicker(true)} />
             </div>
           </div>
 
@@ -276,15 +281,23 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
         }
       />
 
+      <HistoryWalletPickerSheet
+        isOpen={isShowWalletPicker}
+        close={() => setIsShowWalletPicker(false)}
+        wallets={[{ id: "1", name: "GoPay" }]}
+        wallet={{ id: "1", name: "GoPay" }}
+        setWallet={(w) => setValue((prev) => ({ ...prev, wallet_id: w.id }))}
+      />
+
       <ImagePreviewSheet
         isOpen={isShowImagePreview}
         close={() => setIsShowImagePreview(false)}
         image={selectedImagePreview}
       />
 
-      <MapSheet
-        isOpen={isShowMap}
-        close={() => setIsShowMap(false)}
+      <MapPickerSheet
+        isOpen={isShowMapPicker}
+        close={() => setIsShowMapPicker(false)}
         location={
           value.location && value.location_name && value.location_display_name
             ? {

@@ -1,11 +1,7 @@
+import processToken from "@/util/api/processToken";
 import { apiRemoveTokenCookie } from "@/util/api/removeTokenCookie";
-import { OAuth2Client } from "google-auth-library";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-const client = new OAuth2Client(CLIENT_ID);
 
 export async function GET(request: NextRequest) {
   request.cookies.get("money_tracker_token");
@@ -13,53 +9,14 @@ export async function GET(request: NextRequest) {
   const tokenCookie = cookieStore.get("money_tracker_token");
   const token = tokenCookie?.value;
 
-  return processToken(token);
-}
-
-export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const token = body.credential;
-
-  return processToken(token);
-}
-
-async function processToken(token?: string) {
-  if (!token) {
-    return NextResponse.json({ error: "No token provided" }, { status: 400 });
-  }
-
   try {
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: CLIENT_ID,
+    const tokenData = await processToken(token);
+
+    return NextResponse.json({
+      email: tokenData.email,
+      name: tokenData.name,
+      picture: tokenData.picture,
     });
-
-    const payload = ticket.getPayload();
-    if (!payload) {
-      return NextResponse.json(
-        { error: "Token payload is empty" },
-        { status: 400 }
-      );
-    }
-
-    const { sub, email, name, picture } = payload;
-
-    const response = NextResponse.json({
-      googleId: sub,
-      email,
-      name,
-      picture,
-    });
-
-    response.cookies.set("money_tracker_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: payload.exp,
-      path: "/",
-    });
-
-    return response;
   } catch (error) {
     console.error("Error verifying Google token:", error);
     const response = NextResponse.json(
@@ -68,5 +25,36 @@ async function processToken(token?: string) {
     );
     apiRemoveTokenCookie(response);
     return response;
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const token = body.credential;
+
+  try {
+    const tokenData = await processToken(token);
+
+    const response = NextResponse.json({
+      email: tokenData.email,
+      name: tokenData.name,
+      picture: tokenData.picture,
+    });
+
+    response.cookies.set("money_tracker_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: tokenData.exp,
+      path: "/",
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error verifying Google token:", error);
+    return NextResponse.json(
+      { error: "Token verification failed" },
+      { status: 401 }
+    );
   }
 }
