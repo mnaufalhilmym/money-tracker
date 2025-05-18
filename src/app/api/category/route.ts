@@ -22,20 +22,14 @@ export async function GET(request: NextRequest) {
       " FROM categories c" +
       " JOIN types t ON t.id = c.type_id" +
       " WHERE c.deleted_at IS NULL AND c.user_id = $1";
-    const queryParams = [tokenData.userId];
+    const queryParams: any[] = [tokenData.userId];
     if (search) {
       queryParams.push(`%${search}%`);
       querySql += ` AND c.name ILIKE $${queryParams.length}`;
     }
 
-    if (filters.length > 0) {
-      const queryPlaceholder: string[] = [];
-      filters.forEach((filter) => {
-        queryParams.push(filter);
-        queryPlaceholder.push(`$${queryParams.length}`);
-      });
-      querySql += ` AND c.type_id IN (${queryPlaceholder.join(", ")})`;
-    }
+    queryParams.push(filters);
+    querySql += ` AND c.type_id = ANY($${queryParams.length})`;
 
     const categories = await pool.query<CategoryI>(querySql, queryParams);
 

@@ -22,20 +22,14 @@ export async function GET(request: NextRequest) {
       " FROM wallets w" +
       " JOIN types t ON t.id = w.type_id" +
       " WHERE w.deleted_at IS NULL AND w.user_id = $1";
-    const queryParams = [tokenData.userId];
+    const queryParams: any[] = [tokenData.userId];
     if (search) {
       queryParams.push(`%${search}%`);
       querySql += ` AND w.name ILIKE $${queryParams.length}`;
     }
 
-    if (filters.length > 0) {
-      const queryPlaceholder: string[] = [];
-      filters.forEach((filter) => {
-        queryParams.push(filter);
-        queryPlaceholder.push(`$${queryParams.length}`);
-      });
-      querySql += ` AND t.id IN (${queryPlaceholder.join(", ")})`;
-    }
+    queryParams.push(filters);
+    querySql += ` AND w.type_id = ANY($${queryParams.length})`;
 
     const wallets = await pool.query<WalletI>(querySql, queryParams);
 

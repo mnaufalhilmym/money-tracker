@@ -16,6 +16,7 @@ interface Props {
 
 export default function CategoryFormSheet(props: Readonly<Props>) {
   const [value, setValue] = useState(props.category ?? {});
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -29,8 +30,15 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
     [props.category]
   );
 
+  function close() {
+    if (isLoadingSubmit) return;
+    props.close();
+  }
+
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    setIsLoadingSubmit(true);
 
     if (!props.category) {
       await clientInternalApiCall("/api/category", undefined, {
@@ -50,6 +58,8 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
 
     props.close();
     props.refreshCategories();
+
+    setIsLoadingSubmit(false);
   }
 
   function afterDelete() {
@@ -59,7 +69,7 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
 
   return (
     <>
-      <BottomSheet isOpen={props.isOpen} close={props.close}>
+      <BottomSheet isOpen={props.isOpen} close={close}>
         <div className="flex items-center justify-between text-lg">
           <div className="w-6.5 h-6.5" />
           <p className="font-bold text-center">{title}</p>
@@ -140,7 +150,13 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
             </div>
           </div>
 
-          <Button type="submit">Add</Button>
+          <Button
+            type="submit"
+            disable={!value.name || !value.color || !value.type_id}
+            loading={isLoadingSubmit}
+          >
+            {props.category ? "Edit" : "Add"}
+          </Button>
         </form>
       </BottomSheet>
 

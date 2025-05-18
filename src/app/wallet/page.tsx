@@ -46,6 +46,18 @@ export default function Wallets() {
   const debounceSearch = useDebounce(search, 500);
 
   useEffect(() => {
+    refreshWallets();
+  }, [debounceSearch, types]);
+
+  const spendingWallets = useMemo(() => {
+    return wallets.data.filter((w) => w.type_id === 1);
+  }, [wallets]);
+
+  const savingWallets = useMemo(() => {
+    return wallets.data.filter((w) => w.type_id === 2);
+  }, [wallets]);
+
+  async function refreshWallets() {
     const debounceSearchTrim = debounceSearch.trim();
     const search = debounceSearchTrim || undefined;
 
@@ -57,23 +69,8 @@ export default function Wallets() {
       filter.push(2);
     }
 
-    refreshWallets({ search, filter });
-  }, [debounceSearch, types]);
-
-  const spendingWallets = useMemo(() => {
-    return wallets.data.filter((w) => w.type_id === 1);
-  }, [wallets]);
-
-  const savingWallets = useMemo(() => {
-    return wallets.data.filter((w) => w.type_id === 2);
-  }, [wallets]);
-
-  async function refreshWallets(params?: {
-    search?: string;
-    filter?: number[];
-  }) {
     setWallets((prev) => ({ ...prev, isLoading: true }));
-    const data = await getWallets(params);
+    const data = await getWallets({ search, filter });
     setWallets({ data, isLoading: false });
   }
 

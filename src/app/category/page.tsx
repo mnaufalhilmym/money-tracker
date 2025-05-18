@@ -7,7 +7,6 @@ import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import CategoryFormSheet from "./_component/CategoryFormSheet";
-import { COLORS } from "@/constant/color";
 import CategoryFilterSheet from "./_component/CategoryFilterSheet";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import useDebounce from "@/hook/useDebounce";
@@ -47,6 +46,17 @@ export default function Categories() {
   const debounceSearch = useDebounce(search, 500);
 
   useEffect(() => {
+    refreshCategories();
+  }, [debounceSearch, types]);
+
+  const spendingCategories = useMemo(() => {
+    return categories.data.filter((c) => c.type_id === 1);
+  }, [categories]);
+  const savingCategories = useMemo(() => {
+    return categories.data.filter((c) => c.type_id === 2);
+  }, [categories]);
+
+  async function refreshCategories() {
     const debounceSearchTrim = debounceSearch.trim();
     const search = debounceSearchTrim || undefined;
 
@@ -58,24 +68,10 @@ export default function Categories() {
       filter.push(2);
     }
 
-    refreshCategories({ search, filter });
-  }, [debounceSearch, types]);
-
-  async function refreshCategories(params?: {
-    search?: string;
-    filter?: number[];
-  }) {
     setCategories((prev) => ({ ...prev, isLoading: true }));
-    const data = await getCategories(params);
+    const data = await getCategories({ search, filter });
     setCategories({ data, isLoading: false });
   }
-
-  const spendingCategories = useMemo(() => {
-    return categories.data.filter((c) => c.type_id === 1);
-  }, [categories]);
-  const savingCategories = useMemo(() => {
-    return categories.data.filter((c) => c.type_id === 2);
-  }, [categories]);
 
   return (
     <>

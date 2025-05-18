@@ -13,7 +13,7 @@ export default function CheckboxInput(props: Readonly<Props>) {
     <button
       type="button"
       onClick={props.onClick}
-      className="flex items-center gap-x-1.5"
+      className="w-full flex items-center gap-x-1.5"
     >
       <div className="text-xl">
         {props.checked ? <CheckboxIcon /> : <SquareIcon />}
