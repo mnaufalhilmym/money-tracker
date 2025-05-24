@@ -3,9 +3,9 @@ interface HistoryI {
   description?: string;
   type_id?: number;
   type_name?: string;
-  wallet_id?: string;
+  wallet_id?: number;
   wallet_name?: string;
-  category_id?: string;
+  category_id?: number;
   category_name?: string;
   datetime?: string;
   amount?: number;

@@ -5,7 +5,7 @@ export async function selectCategory(id: string, userId: string) {
     "SELECT c.id, c.user_id, c.name, c.color, c.type_id, t.name" +
       " FROM categories c" +
       " JOIN types t ON t.id = c.type_id" +
-      " WHERE w.deleted_at IS NULL AND c.id = $1 AND c.user_id = $2",
+      " WHERE c.deleted_at IS NULL AND c.id = $1 AND c.user_id = $2",
     [id, userId]
   );
 }

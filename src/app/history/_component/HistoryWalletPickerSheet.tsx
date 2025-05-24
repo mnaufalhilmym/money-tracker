@@ -1,16 +1,17 @@
 import CloseIcon from "@/component/icon/CloseIcon";
 import BottomSheet from "@/component/sheet/BottomSheet";
+import toTitleCase from "@/util/titleCase";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
-  wallets: { id: string; name: string }[];
-  wallet: { id: string; name: string };
-  setWallet: (wallet: { id: string; name: string }) => void;
+  wallets: WalletI[];
+  wallet?: number;
+  setWallet: (wallet: WalletI) => void;
 }
 
 export default function HistoryWalletPickerSheet(props: Readonly<Props>) {
-  function setWallet(wallet: { id: string; name: string }) {
+  function setWallet(wallet: WalletI) {
     props.setWallet(wallet);
     props.close();
   }
@@ -38,10 +39,10 @@ export default function HistoryWalletPickerSheet(props: Readonly<Props>) {
             type="button"
             onClick={() => setWallet(w)}
             className={`block w-full p-1 text-center ${
-              props.wallet.id === w.id ? "font-bold" : "font-normal"
+              props.wallet === w.id ? "font-bold" : "font-normal"
             } cursor-pointer`}
           >
-            {w.name}
+            {toTitleCase(w.name!)}
           </button>
         ))}
       </div>

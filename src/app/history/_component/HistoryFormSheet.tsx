@@ -19,12 +19,15 @@ import WalletPicker from "./form/WalletPicker";
 import HistoryWalletPickerSheet from "./HistoryWalletPickerSheet";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import toTitleCase from "@/util/titleCase";
+import toFormData from "@/util/formData";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
   history?: HistoryI;
   types: TypeI[];
+  categories: CategoryI[];
+  wallets: WalletI[];
   refreshHistory: () => void;
 }
 
@@ -34,13 +37,6 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
 
   const [value, setValue] = useState<HistoryI>(props.history ?? {});
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
-  const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
-
-  const [isShowTypePicker, setIsShowTypePicker] = useState(false);
-
-  const [isShowCategoryPicker, setIsShowCategoryPicker] = useState(false);
-
-  const [isShowWalletPicker, setIsShowWalletPicker] = useState(false);
 
   const [formImageList, setFormImageList] = useState<
     | {
@@ -56,8 +52,12 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     url: string;
     name: string;
   }>();
-  const [isShowImagePreview, setIsShowImagePreview] = useState(false);
 
+  const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
+  const [isShowTypePicker, setIsShowTypePicker] = useState(false);
+  const [isShowCategoryPicker, setIsShowCategoryPicker] = useState(false);
+  const [isShowWalletPicker, setIsShowWalletPicker] = useState(false);
+  const [isShowImagePreview, setIsShowImagePreview] = useState(false);
   const [isShowMapPicker, setIsShowMapPicker] = useState(false);
 
   const title = useMemo(
@@ -67,15 +67,22 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
 
   useEffect(() => {
     if (props.isOpen) {
+      const t = props.types[0];
+      let c: CategoryI = {};
+      if (t.id) {
+        c = props.categories.find((c) => c.type_id === t.id) ?? {};
+      }
       setValue(
         props.history ?? {
           type_id: props.types[0].id,
           type_name: props.types[0].name,
+          category_id: c.id,
+          category_name: c.name,
         }
       );
       setFormImageList([]);
     }
-  }, [props.isOpen, props.history, props.types]);
+  }, [props.isOpen, props.history, props.types, props.categories]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -117,10 +124,14 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
 
     setIsLoadingSubmit(true);
 
+    const formData = toFormData(
+      value,
+      formImageList.map((f) => ({ key: "images", file: f.file }))
+    );
     if (!props.history) {
       await clientInternalApiCall("/api/history", undefined, {
         method: "POST",
-        body: JSON.stringify(value),
+        body: formData,
       });
     } else {
       await clientInternalApiCall(
@@ -128,7 +139,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
         undefined,
         {
           method: "PUT",
-          body: JSON.stringify(value),
+          body: formData,
         }
       );
     }
@@ -161,19 +172,6 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     setIsShowImagePreview(true);
   }
 
-  function removeLocation() {
-    setValue((prev) => ({
-      ...prev,
-      location: undefined,
-      location_name: undefined,
-      location_display_name: undefined,
-    }));
-  }
-
-  useEffect(() => {
-    console.log(value);
-  }, [value]);
-
   return (
     <>
       <BottomSheet isOpen={props.isOpen} close={close}>
@@ -203,7 +201,9 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </Button>
             <Button type="button" onClick={() => setIsShowCategoryPicker(true)}>
               <div className="flex items-center justify-center gap-x-1">
-                <span>Medicine</span>
+                <span>
+                  {value.category_name && toTitleCase(value.category_name)}
+                </span>
                 <ChevronDownIcon />
               </div>
             </Button>
@@ -235,11 +235,35 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </div>
           </div>
 
-          {(!!formImagePreviews.length || !!value.location) && (
+          {(!!value.wallet_id ||
+            !!formImagePreviews.length ||
+            !!value.location) && (
             <div
               className="space-y-4 overflow-y-auto scrollable"
               style={{ maxHeight: attributeMaxHeight }}
             >
+              {!!value.wallet_id && (
+                <div>
+                  <p className="font-bold">Wallet</p>
+                  <div className="mt-1 flex gap-x-1.5 items-center">
+                    <p className="flex-1">{value.wallet_name}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setValue((prev) => ({
+                          ...prev,
+                          wallet_id: undefined,
+                          wallet_name: undefined,
+                        }))
+                      }
+                      className="text-base cursor-pointer"
+                    >
+                      <CloseIcon />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {!!formImagePreviews.length && (
                 <div>
                   <p className="font-bold">Images</p>
@@ -283,7 +307,14 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
                     </div>
                     <button
                       type="button"
-                      onClick={removeLocation}
+                      onClick={() =>
+                        setValue((prev) => ({
+                          ...prev,
+                          location: undefined,
+                          location_name: undefined,
+                          location_display_name: undefined,
+                        }))
+                      }
                       className="text-base cursor-pointer"
                     >
                       <CloseIcon />
@@ -294,7 +325,9 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </div>
           )}
 
-          <Button type="submit">Add</Button>
+          <Button type="submit" loading={isLoadingSubmit}>
+            Add
+          </Button>
         </form>
       </BottomSheet>
 
@@ -312,27 +345,46 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
         close={() => setIsShowTypePicker(false)}
         types={props.types}
         type={value.type_id}
-        setType={(t) =>
-          setValue((prev) => ({ ...prev, type_id: t.id, type_name: t.name }))
-        }
+        setType={(t) => {
+          const cat = props.categories.find((c) => c.type_id === t.id);
+          setValue((prev) => ({
+            ...prev,
+            type_id: t.id,
+            type_name: t.name,
+            category_id: cat?.id,
+            category_name: cat?.name,
+            wallet_id: undefined,
+            wallet_name: undefined,
+          }));
+        }}
       />
 
       <HistoryCategoryPickerSheet
         isOpen={isShowCategoryPicker}
         close={() => setIsShowCategoryPicker(false)}
-        categories={[{ id: "1", name: "Medicine" }]}
-        category={{ id: "1", name: "Medicine" }}
+        categories={props.categories.filter((c) => c.type_id === value.type_id)}
+        category={value.category_id}
         setCategory={(c) =>
-          setValue((prev) => ({ ...prev, category_id: c.id }))
+          setValue((prev) => ({
+            ...prev,
+            category_id: c.id,
+            category_name: c.name,
+          }))
         }
       />
 
       <HistoryWalletPickerSheet
         isOpen={isShowWalletPicker}
         close={() => setIsShowWalletPicker(false)}
-        wallets={[{ id: "1", name: "GoPay" }]}
-        wallet={{ id: "1", name: "GoPay" }}
-        setWallet={(w) => setValue((prev) => ({ ...prev, wallet_id: w.id }))}
+        wallets={props.wallets.filter((w) => w.id === value.type_id)}
+        wallet={value.wallet_id}
+        setWallet={(w) =>
+          setValue((prev) => ({
+            ...prev,
+            wallet_id: w.id,
+            wallet_name: w.name,
+          }))
+        }
       />
 
       <ImagePreviewSheet

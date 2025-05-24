@@ -4,6 +4,8 @@ export async function insertImagesTx(
   client: PoolClient,
   savedImages: SavedImage[]
 ) {
+  if (!savedImages.length) return;
+
   let insertImagesSql =
     "INSERT INTO images" +
     " (id, file_name, content_type, size, driver, path)" +
@@ -31,5 +33,6 @@ export async function insertImagesTx(
       `$${idx * 6 + 6}` +
       ")";
   }
+
   await client.query(insertImagesSql, insertImagesParams);
 }

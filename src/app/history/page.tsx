@@ -34,6 +34,8 @@ async function getHistory(params?: { search?: string; filter?: number[] }) {
 
 export default function History() {
   const [types, setTypes] = useState<TypeI[]>([]);
+  const [categories, setCategories] = useState<CategoryI[]>([]);
+  const [wallets, setWallets] = useState<WalletI[]>([]);
   const [history, setHistory] = useState<{
     data: HistoryI[];
     isLoading: boolean;
@@ -48,7 +50,7 @@ export default function History() {
   const debounceSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    resetTypes();
+    resetTypesCategoriesWallets();
   }, []);
 
   useEffect(() => {
@@ -84,15 +86,34 @@ export default function History() {
     return grouped;
   }, [history.data]);
 
-  async function resetTypes() {
-    const typesData = await getTypes();
-    setTypes(typesData);
+  async function resetTypesCategoriesWallets() {
+    const typeData = await getTypes();
+    setTypes(typeData);
 
     const types: { [key: string]: boolean } = {};
-    for (const t of typesData) {
+    for (const t of typeData) {
       types[t.name!] = true;
     }
     setTypeFilter(types);
+
+    const filterQueryParams: { key: string; value: number }[] = [];
+    typeData.forEach((t) => {
+      filterQueryParams.push({ key: "f", value: t.id! });
+    });
+
+    const respCategories = await clientInternalApiCall(
+      "/api/category",
+      filterQueryParams
+    );
+    const categories: CategoryI[] = await respCategories.json();
+    setCategories(categories);
+
+    const respWallets = await clientInternalApiCall(
+      "/api/wallet",
+      filterQueryParams
+    );
+    const wallets: WalletI[] = await respWallets.json();
+    setWallets(wallets);
   }
 
   async function refreshHistory() {
@@ -190,6 +211,8 @@ export default function History() {
         }}
         history={editHistory}
         types={types}
+        categories={categories}
+        wallets={wallets}
         refreshHistory={refreshHistory}
       />
 

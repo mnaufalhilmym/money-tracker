@@ -1,16 +1,17 @@
 import CloseIcon from "@/component/icon/CloseIcon";
 import BottomSheet from "@/component/sheet/BottomSheet";
+import toTitleCase from "@/util/titleCase";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
-  categories: { id: string; name: string }[];
-  category: { id: string; name: string };
-  setCategory: (category: { id: string; name: string }) => void;
+  categories: CategoryI[];
+  category?: number;
+  setCategory: (category: CategoryI) => void;
 }
 
 export default function HistoryCategoryPickerSheet(props: Readonly<Props>) {
-  function setCategory(category: { id: string; name: string }) {
+  function setCategory(category: CategoryI) {
     props.setCategory(category);
     props.close();
   }
@@ -38,10 +39,10 @@ export default function HistoryCategoryPickerSheet(props: Readonly<Props>) {
             type="button"
             onClick={() => setCategory(c)}
             className={`block w-full p-1 text-center ${
-              props.category.id === c.id ? "font-bold" : "font-normal"
+              props.category === c.id ? "font-bold" : "font-normal"
             } cursor-pointer`}
           >
-            {c.name}
+            {toTitleCase(c.name!)}
           </button>
         ))}
       </div>

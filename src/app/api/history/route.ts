@@ -66,15 +66,24 @@ export async function POST(request: NextRequest) {
     const { fields, files } = await parseFormData(request);
 
     const {
-      description,
-      wallet_id,
-      category_id,
-      datetime,
-      amount,
-      location,
-      location_name,
-      location_display_name,
+      description: descriptions,
+      wallet_id: wallet_ids,
+      category_id: category_ids,
+      datetime: datetimes,
+      amount: amounts,
+      location: locations,
+      location_name: location_names,
+      location_display_name: location_display_names,
     } = fields;
+
+    const description = descriptions?.[0];
+    const wallet_id = wallet_ids?.[0];
+    const category_id = category_ids?.[0];
+    const datetime = datetimes?.[0];
+    const amount = amounts?.[0];
+    const location = locations?.[0];
+    const location_name = location_names?.[0];
+    const location_display_name = location_display_names?.[0];
 
     let uploadedImages: formidable.File[] = [];
     if (files.images) {
