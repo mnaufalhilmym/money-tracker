@@ -22,7 +22,7 @@ export default function SignIn() {
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 h-11">
         <GoogleSignInButton />
       </div>
     </div>

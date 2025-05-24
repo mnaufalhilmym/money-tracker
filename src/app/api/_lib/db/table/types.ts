@@ -15,14 +15,9 @@ export default async function createTypesTableIfNotExists() {
   );
 
   await pool.query(
-    "INSERT INTO types (id, name)" +
-      " VALUES (1, 'SPENDING')" +
-      " ON CONFLICT (id) DO NOTHING"
-  );
-
-  await pool.query(
-    "INSERT INTO types (id, name)" +
-      " VALUES (2, 'SAVING')" +
+    "INSERT INTO types (id, name) VALUES" +
+      " (1, 'SPENDING')," +
+      " (2, 'SAVING')" +
       " ON CONFLICT (id) DO NOTHING"
   );
 

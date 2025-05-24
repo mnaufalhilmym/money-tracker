@@ -28,7 +28,7 @@ export default function SearchList(props: Readonly<Props>) {
         <button
           key={l.lat + l.lng}
           onClick={() => props.onPick(l)}
-          className="flex items-center gap-x-2 text-left"
+          className="flex items-center gap-x-2 text-left cursor-pointer"
         >
           <div className="text-xl">
             <LocationIcon />

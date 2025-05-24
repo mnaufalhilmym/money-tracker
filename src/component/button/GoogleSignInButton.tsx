@@ -16,6 +16,7 @@ export default function GoogleSignInButton() {
     ) {
       window.google.accounts.id.initialize({
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        auto_select: true,
         callback: (r) => {
           (async () => {
             signInCallback(r);

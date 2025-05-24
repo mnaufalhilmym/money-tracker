@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 
 export default function getTokenCookie(request: NextRequest) {
-  return request.cookies.get("money_tracker_token")?.value;
+  return process.env.COOKIE_KEY
+    ? request.cookies.get(process.env.COOKIE_KEY)?.value
+    : undefined;
 }

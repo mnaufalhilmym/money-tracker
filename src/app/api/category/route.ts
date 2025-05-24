@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     await createCategoriesTableIfNotExists();
 
     let querySql =
-      "SELECT c.id id, c.user_id user_id, c.name name, c.color color, c.type_id type_id, t.name type_name" +
+      "SELECT c.id id, c.user_id user_id, c.name name, c.color color, t.id type_id, t.name type_name" +
       " FROM categories c" +
       " JOIN types t ON t.id = c.type_id" +
       " WHERE c.deleted_at IS NULL AND c.user_id = $1";
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     queryParams.push(filters);
-    querySql += ` AND c.type_id = ANY($${queryParams.length})`;
+    querySql += ` AND t.id = ANY($${queryParams.length})`;
 
     const categories = await pool.query<CategoryI>(querySql, queryParams);
 
@@ -59,14 +59,17 @@ export async function POST(request: NextRequest) {
 
     try {
       const insertQuery = await client.query<{ id: number }>(
-        "INSERT INTO categories (user_id, name, color, type_id) VALUES ($1, $2, $3, $4) RETURNING id",
+        "INSERT INTO categories" +
+          " (user_id, name, color, type_id)" +
+          " VALUES ($1, $2, $3, $4)" +
+          " RETURNING id",
         [tokenData.userId, name, color, type_id]
       );
 
       const id = insertQuery.rows[0].id;
 
       const category = await client.query<CategoryI>(
-        "SELECT c.id id, c.user_id user_id, c.name name, c.color color, c.type_id type_id, t.name type_name" +
+        "SELECT c.id id, c.user_id user_id, c.name name, c.color color, t.id type_id, t.name type_name" +
           " FROM categories c" +
           " JOIN types t ON t.id = c.type_id" +
           " WHERE c.deleted_at IS NULL AND c.id = $1 AND c.user_id = $2",

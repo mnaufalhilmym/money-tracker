@@ -13,7 +13,7 @@ export default function RadioInput(props: Readonly<Props>) {
     <button
       type="button"
       onClick={props.onClick}
-      className="flex items-center gap-x-1.5"
+      className="flex items-center gap-x-1.5 cursor-pointer"
     >
       <div className="text-xl">
         {props.checked ? <RadioButtonOnIcon /> : <RadioButtonOffIcon />}

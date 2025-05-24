@@ -2,6 +2,7 @@ import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import removeTokenCookie from "@/util/api/removeTokenCookie";
 import { NextRequest, NextResponse } from "next/server";
+import { parse } from "tldts";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -41,13 +42,20 @@ export async function POST(request: NextRequest) {
     const currentTime = Math.floor(Date.now() / 1000);
     const secsUntilExpire = tokenData.exp - currentTime;
 
-    response.cookies.set("money_tracker_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: secsUntilExpire,
-      path: "/",
-    });
+    if (process.env.COOKIE_KEY) {
+      let rootDomain = undefined;
+      if (process.env.COOKIE_DOMAIN) {
+        rootDomain = parse(process.env.COOKIE_DOMAIN).domain ?? undefined;
+      }
+      response.cookies.set(process.env.COOKIE_KEY, token, {
+        domain: rootDomain,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+        sameSite: "strict",
+        maxAge: secsUntilExpire,
+      });
+    }
 
     return response;
   } catch (error) {

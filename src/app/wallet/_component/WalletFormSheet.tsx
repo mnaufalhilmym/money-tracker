@@ -73,7 +73,7 @@ export default function WalletFormSheet(props: Readonly<Props>) {
               <button
                 type="button"
                 onClick={() => setIsShowConfirmDelete(true)}
-                className="block p-1"
+                className="block p-1 cursor-pointer"
               >
                 <TrashIcon />
               </button>

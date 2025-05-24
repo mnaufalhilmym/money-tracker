@@ -28,7 +28,7 @@ export default function Button(props: Readonly<Props>) {
       onClick={onClick}
       className={`w-full py-2 px-4 font-bold text-center rounded-full bg-white/20 border border-white/20 ${
         props.disable || props.loading ? "opacity-50" : "opacity-100"
-      }`}
+      } cursor-pointer`}
     >
       {props.loading ? (
         <div className="flex items-center justify-center gap-x-2">

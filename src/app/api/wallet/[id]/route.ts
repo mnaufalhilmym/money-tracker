@@ -3,6 +3,7 @@ import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
 import createWalletsTableIfNotExists from "../../_lib/db/table/wallets";
 import pool from "../../_lib/db/db";
+import { selectWallet } from "../_util/dbSelectWallet";
 
 export async function GET(
   request: NextRequest,
@@ -17,13 +18,7 @@ export async function GET(
 
     await createWalletsTableIfNotExists();
 
-    const wallet = await pool.query<WalletI>(
-      "SELECT w.id, w.user_id, w.name, w.type_id, t.name" +
-        " FROM wallets w" +
-        " JOIN types t ON t.id = w.type_id" +
-        " WHERE w.deleted_at IS NULL AND w.id = $1 AND w.user_id = $2",
-      [id, tokenData.userId]
-    );
+    const wallet = await selectWallet(id, tokenData.userId);
 
     return NextResponse.json(wallet.rows[0]);
   } catch (error) {

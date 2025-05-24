@@ -1,4 +1,5 @@
 import pool from "../db";
+import createTypesTableIfNotExists from "./types";
 
 let hasRun = false;
 
@@ -6,6 +7,8 @@ export default async function createCategoriesTableIfNotExists() {
   if (hasRun) return;
 
   console.info("Running createCategoriesTableIfNotExists");
+
+  await createTypesTableIfNotExists();
 
   await pool.query(
     "CREATE TABLE IF NOT EXISTS categories (" +

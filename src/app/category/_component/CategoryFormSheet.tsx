@@ -78,7 +78,7 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
               <button
                 type="button"
                 onClick={() => setIsShowConfirmDelete(true)}
-                className="block p-1"
+                className="block p-1 cursor-pointer"
               >
                 <TrashIcon />
               </button>
@@ -107,7 +107,7 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
                   key={name}
                   type="button"
                   onClick={() => setValue((prev) => ({ ...prev, color }))}
-                  className="w-7 h-7 mt-0.5 border rounded-lg"
+                  className="w-7 h-7 mt-0.5 border rounded-lg cursor-pointer"
                   style={{
                     backgroundColor: color,
                     borderColor:

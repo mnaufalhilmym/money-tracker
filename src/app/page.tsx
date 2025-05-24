@@ -23,11 +23,14 @@ export default async function Home() {
       <div className="flex p-1 mt-4 rounded-full bg-white/20 border border-white/20">
         <button
           type="button"
-          className="flex-1 py-2 px-4 bg-white text-black rounded-full"
+          className="flex-1 py-2 px-4 bg-white text-black rounded-full cursor-pointer"
         >
           Spending
         </button>
-        <button type="button" className="flex-1 py-2 px-4 rounded-full">
+        <button
+          type="button"
+          className="flex-1 py-2 px-4 rounded-full cursor-pointer"
+        >
           Saving
         </button>
       </div>
@@ -37,7 +40,7 @@ export default async function Home() {
           <p>Wallet:</p>
           <button
             type="button"
-            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
           >
             <span>All</span>
             <ChevronDownIcon />
@@ -47,7 +50,7 @@ export default async function Home() {
           <p>Category:</p>
           <button
             type="button"
-            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
           >
             <span>All</span>
             <ChevronDownIcon />
@@ -63,7 +66,7 @@ export default async function Home() {
         </div>
         <button
           type="button"
-          className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20"
+          className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
         >
           <span>Last 7 days</span>
           <ChevronDownIcon />

@@ -50,7 +50,11 @@ export default function MapPickerSheet(props: Readonly<Props>) {
         <div className="w-6.5 h-6.5" />
         <p className="font-bold text-center">Pick a Location</p>
         <div className="w-6.5 h-6.5 flex items-center justify-center">
-          <button type="button" onClick={props.close} className="block p-1">
+          <button
+            type="button"
+            onClick={props.close}
+            className="block p-1 cursor-pointer"
+          >
             <CloseIcon />
           </button>
         </div>

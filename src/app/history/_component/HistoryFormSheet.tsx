@@ -17,29 +17,25 @@ import HistoryTypePickerSheet from "./HistoryTypePickerSheet";
 import HistoryCategoryPickerSheet from "./HistoryCategoryPickerSheet";
 import WalletPicker from "./form/WalletPicker";
 import HistoryWalletPickerSheet from "./HistoryWalletPickerSheet";
+import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import toTitleCase from "@/util/titleCase";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
   history?: HistoryI;
+  types: TypeI[];
+  refreshHistory: () => void;
 }
 
 export default function HistoryFormSheet(props: Readonly<Props>) {
   const { width: maxWidth, height: maxHeight } = useWindowInnerSize();
   const attributeMaxHeight = maxHeight * 0.9 - 288;
 
-  const title = useMemo(
-    () => (props.history ? "Edit History" : "Add History"),
-    [props.history]
-  );
-
-  const [value, setValue] = useState(props.history ?? {});
-
+  const [value, setValue] = useState<HistoryI>(props.history ?? {});
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
   const [isShowConfirmDelete, setIsShowConfirmDelete] = useState(false);
 
-  const [selectedType, setSelectedType] = useState<"Spending" | "Saving">(
-    "Spending"
-  );
   const [isShowTypePicker, setIsShowTypePicker] = useState(false);
 
   const [isShowCategoryPicker, setIsShowCategoryPicker] = useState(false);
@@ -64,12 +60,22 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
 
   const [isShowMapPicker, setIsShowMapPicker] = useState(false);
 
+  const title = useMemo(
+    () => (props.history ? "Edit History" : "Add History"),
+    [props.history]
+  );
+
   useEffect(() => {
     if (props.isOpen) {
-      setValue(props.history ?? {});
+      setValue(
+        props.history ?? {
+          type_id: props.types[0].id,
+          type_name: props.types[0].name,
+        }
+      );
       setFormImageList([]);
     }
-  }, [props.isOpen, props.history]);
+  }, [props.isOpen, props.history, props.types]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -101,6 +107,43 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     };
   }, [formImageList]);
 
+  function close() {
+    if (isLoadingSubmit) return;
+    props.close();
+  }
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    setIsLoadingSubmit(true);
+
+    if (!props.history) {
+      await clientInternalApiCall("/api/history", undefined, {
+        method: "POST",
+        body: JSON.stringify(value),
+      });
+    } else {
+      await clientInternalApiCall(
+        "/api/history/" + props.history.id,
+        undefined,
+        {
+          method: "PUT",
+          body: JSON.stringify(value),
+        }
+      );
+    }
+
+    props.close();
+    props.refreshHistory();
+
+    setIsLoadingSubmit(false);
+  }
+
+  function afterDelete() {
+    props.close();
+    props.refreshHistory();
+  }
+
   function removeFormImage(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     id: string
@@ -127,14 +170,13 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     }));
   }
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    props.close();
-  }
+  useEffect(() => {
+    console.log(value);
+  }, [value]);
 
   return (
     <>
-      <BottomSheet isOpen={props.isOpen} close={props.close}>
+      <BottomSheet isOpen={props.isOpen} close={close}>
         <div className="flex items-center justify-between text-lg">
           <div className="w-6.5 h-6.5" />
           <p className="font-bold text-center">{title}</p>
@@ -143,7 +185,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
               <button
                 type="button"
                 onClick={() => setIsShowConfirmDelete(true)}
-                className="block p-1"
+                className="block p-1 cursor-pointer"
               >
                 <TrashIcon />
               </button>
@@ -155,7 +197,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           <div className="flex items-center gap-x-2">
             <Button type="button" onClick={() => setIsShowTypePicker(true)}>
               <div className="flex items-center justify-center gap-x-1">
-                <span>{selectedType}</span>
+                <span>{value.type_name && toTitleCase(value.type_name)}</span>
                 <ChevronDownIcon />
               </div>
             </Button>
@@ -175,10 +217,10 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           <div className="flex items-center gap-x-4">
             <input
               type="text"
-              placeholder="Title"
-              value={value.title ?? ""}
+              placeholder="Description"
+              value={value.description ?? ""}
               onChange={(e) =>
-                setValue((prev) => ({ ...prev, title: e.target.value }))
+                setValue((prev) => ({ ...prev, description: e.target.value }))
               }
               className="outline-none w-full text-center"
             />
@@ -218,7 +260,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
                         <button
                           type="button"
                           onClick={(e) => removeFormImage(e, image.id)}
-                          className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs"
+                          className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs cursor-pointer"
                         >
                           <CloseIcon />
                         </button>
@@ -242,7 +284,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
                     <button
                       type="button"
                       onClick={removeLocation}
-                      className="text-base"
+                      className="text-base cursor-pointer"
                     >
                       <CloseIcon />
                     </button>
@@ -260,6 +302,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
         <ConfirmDeleteHistorySheet
           isOpen={isShowConfirmDelete}
           close={() => setIsShowConfirmDelete(false)}
+          afterDelete={afterDelete}
           history={props.history}
         />
       )}
@@ -267,8 +310,11 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
       <HistoryTypePickerSheet
         isOpen={isShowTypePicker}
         close={() => setIsShowTypePicker(false)}
-        type={selectedType}
-        setType={setSelectedType}
+        types={props.types}
+        type={value.type_id}
+        setType={(t) =>
+          setValue((prev) => ({ ...prev, type_id: t.id, type_name: t.name }))
+        }
       />
 
       <HistoryCategoryPickerSheet

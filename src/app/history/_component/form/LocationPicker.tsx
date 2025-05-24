@@ -7,7 +7,11 @@ interface Props {
 
 export default function LocationPicker(props: Readonly<Props>) {
   return (
-    <button type="button" onClick={props.onClick} className="flex text-lg">
+    <button
+      type="button"
+      onClick={props.onClick}
+      className="flex text-lg cursor-pointer"
+    >
       <LocationIcon />
       <sup className="text-xs">+</sup>
     </button>

@@ -28,7 +28,11 @@ export default function HomeHeader(props: Readonly<Props>) {
         <br />
         <span className="font-bold">{props.name}</span>
       </div>
-      <button type="button" onClick={signOut} className="text-xl">
+      <button
+        type="button"
+        onClick={signOut}
+        className="text-xl cursor-pointer"
+      >
         <LogOutIcon />
       </button>
     </div>

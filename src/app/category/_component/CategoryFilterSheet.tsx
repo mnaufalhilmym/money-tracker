@@ -1,13 +1,14 @@
 import Button from "@/component/button/Button";
 import CheckboxInput from "@/component/input/CheckboxInput";
 import BottomSheet from "@/component/sheet/BottomSheet";
+import toTitleCase from "@/util/titleCase";
 import { FormEvent, useEffect, useState } from "react";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
-  types: { spending: boolean; saving: boolean };
-  setTypes: (types: { spending: boolean; saving: boolean }) => void;
+  types: { [key: string]: boolean };
+  setTypes: (types: { [key: string]: boolean }) => void;
 }
 
 export default function CategoryFilterSheet(props: Readonly<Props>) {
@@ -32,25 +33,22 @@ export default function CategoryFilterSheet(props: Readonly<Props>) {
 
       <form onSubmit={onSubmit} className="mt-2 space-y-4">
         <div>
-          <p className="font-bold">Category Type</p>
+          <p className="font-bold">Type</p>
           <div className="mt-1 space-y-1">
-            <CheckboxInput
-              checked={types.spending}
-              onClick={() =>
-                setTypes({
-                  ...types,
-                  spending: !types.spending,
-                })
-              }
-            >
-              Spending
-            </CheckboxInput>
-            <CheckboxInput
-              checked={types.saving}
-              onClick={() => setTypes({ ...types, saving: !types.saving })}
-            >
-              Saving
-            </CheckboxInput>
+            {Object.entries(props.types).map(([key, value]) => (
+              <CheckboxInput
+                key={key}
+                checked={value}
+                onClick={() =>
+                  props.setTypes({
+                    ...props.types,
+                    [key]: !value,
+                  })
+                }
+              >
+                {toTitleCase(key)}
+              </CheckboxInput>
+            ))}
           </div>
         </div>
 

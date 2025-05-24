@@ -8,52 +8,57 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import HistoryFilterSheet from "./_component/HistoryFilterSheet";
 import HistoryFormSheet from "./_component/HistoryFormSheet";
+import useDebounce from "@/hook/useDebounce";
+import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import NotFound from "@/component/notFound/NotFound";
+import Loading from "@/component/loading/Loading";
+import getTypes from "@/util/fetchData/getTypes";
+
+async function getHistory(params?: { search?: string; filter?: number[] }) {
+  const queryParams: { key: string; value: string | number }[] = [];
+  if (params?.search) {
+    queryParams.push({ key: "s", value: params.search });
+  }
+  if (params?.filter && params.filter.length > 0) {
+    params.filter.forEach((filter) => {
+      queryParams.push({ key: "f", value: filter });
+    });
+  }
+
+  const response = await clientInternalApiCall("/api/history", queryParams);
+
+  const data: HistoryI[] = await response.json();
+
+  return data;
+}
 
 export default function History() {
+  const [types, setTypes] = useState<TypeI[]>([]);
+  const [history, setHistory] = useState<{
+    data: HistoryI[];
+    isLoading: boolean;
+  }>({ data: [], isLoading: true });
+
   const [isOpenAddSheet, setisOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
-  const [types, setTypes] = useState({ spending: true, saving: true });
+  const [typeFilter, setTypeFilter] = useState<{ [key: string]: boolean }>({});
   const [editHistory, setEditHistory] = useState<HistoryI>();
 
-  const [histories, setHistories] = useState<HistoryI[]>([]);
+  const [search, setSearch] = useState("");
+  const debounceSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    setHistories([
-      {
-        id: "1",
-        title: "Spotify",
-        category_id: "1",
-        datetime: new Date().toISOString(),
-        amount: -100000,
-      },
-      {
-        id: "2",
-        title: "Paypal",
-        category_id: "1",
-        datetime: new Date(Date.now() - 86400000).toISOString(),
-        amount: -59000,
-      },
-      {
-        id: "3",
-        title: "Stripe",
-        category_id: "1",
-        datetime: "2024-03-02T15:33:00+07:00",
-        amount: -79000,
-      },
-      {
-        id: "4",
-        title: "Wise",
-        category_id: "1",
-        datetime: "2024-03-02T13:33:00+07:00",
-        amount: -39000,
-      },
-    ]);
+    resetTypes();
   }, []);
+
+  useEffect(() => {
+    refreshHistory();
+  }, [debounceSearch, typeFilter]);
 
   const groupedHistories = useMemo(() => {
     const grouped = new Map<string, HistoryI[]>();
 
-    if (!histories.length) return grouped;
+    if (!history.data.length) return grouped;
 
     const today = new Date();
     const yesterday = new Date(today);
@@ -62,7 +67,7 @@ export default function History() {
     const todayKey = today.toLocaleDateString();
     const yesterdayKey = yesterday.toLocaleDateString();
 
-    histories.forEach((h) => {
+    history.data.forEach((h) => {
       if (h.datetime) {
         const date = new Date(h.datetime);
         h.datetime = date.toLocaleString();
@@ -77,7 +82,35 @@ export default function History() {
     });
 
     return grouped;
-  }, [histories]);
+  }, [history.data]);
+
+  async function resetTypes() {
+    const typesData = await getTypes();
+    setTypes(typesData);
+
+    const types: { [key: string]: boolean } = {};
+    for (const t of typesData) {
+      types[t.name!] = true;
+    }
+    setTypeFilter(types);
+  }
+
+  async function refreshHistory() {
+    const debounceSearchTrim = debounceSearch.trim();
+    const search = debounceSearchTrim || undefined;
+
+    const filter: number[] = [];
+    for (const [key, value] of Object.entries(typeFilter)) {
+      if (!value) continue;
+      const id = types.find((t) => t.name === key)?.id;
+      if (!id) continue;
+      filter.push(id);
+    }
+
+    setHistory((prev) => ({ ...prev, isLoading: true }));
+    const data = await getHistory({ search, filter });
+    setHistory({ data, isLoading: false });
+  }
 
   return (
     <>
@@ -89,7 +122,7 @@ export default function History() {
         <button
           type="button"
           onClick={() => setisOpenAddSheet(true)}
-          className="p-1"
+          className="p-1 cursor-pointer"
         >
           <AddIcon />
         </button>
@@ -101,44 +134,52 @@ export default function History() {
           <input
             type="text"
             placeholder="Search history"
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full outline-none"
           />
         </div>
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-1 text-lg"
+          className="p-1 text-lg cursor-pointer"
         >
           <FilterIcon />
         </button>
       </div>
 
       <div className="mt-4 space-y-4">
-        {[...groupedHistories].map(([dateKey, items]) => (
-          <div key={dateKey}>
-            <p className="font-bold text-lg">{dateKey}</p>
-            <div className="mt-2 space-y-2">
-              {items.map((i) => (
-                <button
-                  key={i.id}
-                  onClick={() => setEditHistory(i)}
-                  className="w-full flex items-center gap-x-2 justify-between text-left"
-                >
-                  <div className="flex items-center gap-x-2">
-                    <div className="w-8 h-8 bg-red-500 rounded-full" />
-                    <div>
-                      <p className="font-bold">{i.title}</p>
-                      <p className="text-xs text-white/70">{i.datetime}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-bold">{i.amount}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+        {!history.isLoading ? (
+          <>
+            {[...groupedHistories].map(([dateKey, items]) => (
+              <div key={dateKey}>
+                <p className="font-bold text-lg">{dateKey}</p>
+                <div className="mt-2 space-y-2">
+                  {items.map((i) => (
+                    <button
+                      key={i.id}
+                      onClick={() => setEditHistory(i)}
+                      className="w-full flex items-center gap-x-2 justify-between text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-x-2">
+                        <div className="w-8 h-8 bg-red-500 rounded-full" />
+                        <div>
+                          <p className="font-bold">{i.description}</p>
+                          <p className="text-xs text-white/70">{i.datetime}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-bold">{i.amount}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {!groupedHistories.size && <NotFound />}
+          </>
+        ) : (
+          <Loading />
+        )}
       </div>
 
       <HistoryFormSheet
@@ -148,13 +189,15 @@ export default function History() {
           if (editHistory) setEditHistory(undefined);
         }}
         history={editHistory}
+        types={types}
+        refreshHistory={refreshHistory}
       />
 
       <HistoryFilterSheet
         isOpen={isOpenFilterSheet}
         close={() => setIsOpenFilterSheet(false)}
-        types={types}
-        setTypes={setTypes}
+        types={typeFilter}
+        setTypes={setTypeFilter}
       />
     </>
   );

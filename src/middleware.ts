@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const token = request.cookies.get("money_tracker_token")?.value;
+  const token = process.env.COOKIE_KEY
+    ? request.cookies.get(process.env.COOKIE_KEY)?.value
+    : undefined;
 
   const isSignInPath = pathname === "/signin";
   const isPublicPath =

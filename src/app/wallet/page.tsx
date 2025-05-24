@@ -12,6 +12,7 @@ import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
 import useDebounce from "@/hook/useDebounce";
+import getTypes from "@/util/fetchData/getTypes";
 
 async function getWallets(params?: { search?: string; filter?: number[] }) {
   const queryParams: { key: string; value: string | number }[] = [];
@@ -32,6 +33,7 @@ async function getWallets(params?: { search?: string; filter?: number[] }) {
 }
 
 export default function Wallets() {
+  const [types, setTypes] = useState<TypeI[]>([]);
   const [wallets, setWallets] = useState<{
     data: WalletI[];
     isLoading: boolean;
@@ -39,34 +41,49 @@ export default function Wallets() {
 
   const [isOpenAddSheet, setIsOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
-  const [types, setTypes] = useState({ spending: true, saving: true });
+  const [typeFilter, setTypeFilter] = useState<{ [key: string]: boolean }>({});
   const [editWallet, setEditWallet] = useState<WalletI>();
 
   const [search, setSearch] = useState("");
   const debounceSearch = useDebounce(search, 500);
 
   useEffect(() => {
+    resetTypes();
+  }, []);
+
+  useEffect(() => {
     refreshWallets();
-  }, [debounceSearch, types]);
+  }, [debounceSearch, typeFilter]);
 
   const spendingWallets = useMemo(() => {
     return wallets.data.filter((w) => w.type_id === 1);
-  }, [wallets]);
+  }, [wallets.data]);
 
   const savingWallets = useMemo(() => {
     return wallets.data.filter((w) => w.type_id === 2);
-  }, [wallets]);
+  }, [wallets.data]);
+
+  async function resetTypes() {
+    const typesData = await getTypes();
+    setTypes(typesData);
+
+    const types: { [key: string]: boolean } = {};
+    for (const t of typesData) {
+      types[t.name!] = true;
+    }
+    setTypeFilter(types);
+  }
 
   async function refreshWallets() {
     const debounceSearchTrim = debounceSearch.trim();
     const search = debounceSearchTrim || undefined;
 
     const filter: number[] = [];
-    if (types.spending) {
-      filter.push(1);
-    }
-    if (types.saving) {
-      filter.push(2);
+    for (const [key, value] of Object.entries(typeFilter)) {
+      if (!value) continue;
+      const id = types.find((t) => t.name === key)?.id;
+      if (!id) continue;
+      filter.push(id);
     }
 
     setWallets((prev) => ({ ...prev, isLoading: true }));
@@ -84,7 +101,7 @@ export default function Wallets() {
         <button
           type="button"
           onClick={() => setIsOpenAddSheet(true)}
-          className="p-1"
+          className="p-1 cursor-pointer"
         >
           <AddIcon />
         </button>
@@ -103,7 +120,7 @@ export default function Wallets() {
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-1 text-lg"
+          className="p-1 text-lg cursor-pointer"
         >
           <FilterIcon />
         </button>
@@ -120,7 +137,7 @@ export default function Wallets() {
                     <button
                       key={w.id}
                       onClick={() => setEditWallet(w)}
-                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
+                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg cursor-pointer"
                     >
                       <p>{w.name}</p>
                     </button>
@@ -136,7 +153,7 @@ export default function Wallets() {
                     <button
                       key={w.id}
                       onClick={() => setEditWallet(w)}
-                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg"
+                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg cursor-pointer"
                     >
                       <p>{w.name}</p>
                     </button>
@@ -164,8 +181,8 @@ export default function Wallets() {
       <WalletFilterSheet
         isOpen={isOpenFilterSheet}
         close={() => setIsOpenFilterSheet(false)}
-        types={types}
-        setTypes={setTypes}
+        types={typeFilter}
+        setTypes={setTypeFilter}
       />
     </>
   );

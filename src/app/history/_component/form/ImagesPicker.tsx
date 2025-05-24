@@ -26,7 +26,7 @@ export default function ImagesPicker(props: Readonly<Props>) {
     <button
       type="button"
       onClick={() => inputRef.current?.click()}
-      className="flex text-lg"
+      className="flex text-lg cursor-pointer"
     >
       <input
         ref={inputRef}

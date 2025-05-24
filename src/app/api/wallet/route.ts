@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     await createWalletsTableIfNotExists();
 
     let querySql =
-      "SELECT w.id id, w.user_id user_id, w.name name, w.type_id type_id, t.name type_name" +
+      "SELECT w.id id, w.user_id user_id, w.name name, t.id type_id, t.name type_name" +
       " FROM wallets w" +
       " JOIN types t ON t.id = w.type_id" +
       " WHERE w.deleted_at IS NULL AND w.user_id = $1";
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     queryParams.push(filters);
-    querySql += ` AND w.type_id = ANY($${queryParams.length})`;
+    querySql += ` AND t.id = ANY($${queryParams.length})`;
 
     const wallets = await pool.query<WalletI>(querySql, queryParams);
 

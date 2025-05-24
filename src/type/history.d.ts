@@ -1,8 +1,12 @@
 interface HistoryI {
   id?: string;
-  title?: string;
+  description?: string;
+  type_id?: number;
+  type_name?: string;
   wallet_id?: string;
+  wallet_name?: string;
   category_id?: string;
+  category_name?: string;
   datetime?: string;
   amount?: number;
   image_ids?: string[];

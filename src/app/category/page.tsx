@@ -12,6 +12,7 @@ import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import useDebounce from "@/hook/useDebounce";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
+import getTypes from "@/util/fetchData/getTypes";
 
 async function getCategories(params?: { search?: string; filter?: number[] }) {
   const queryParams: { key: string; value: string | number }[] = [];
@@ -32,6 +33,7 @@ async function getCategories(params?: { search?: string; filter?: number[] }) {
 }
 
 export default function Categories() {
+  const [types, setTypes] = useState<TypeI[]>([]);
   const [categories, setCategories] = useState<{
     data: CategoryI[];
     isLoading: boolean;
@@ -39,33 +41,48 @@ export default function Categories() {
 
   const [isOpenAddSheet, setIsOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
-  const [types, setTypes] = useState({ spending: true, saving: true });
+  const [typeFilter, setTypeFilter] = useState<{ [key: string]: boolean }>({});
   const [editCategory, setEditCategory] = useState<CategoryI>();
 
   const [search, setSearch] = useState("");
   const debounceSearch = useDebounce(search, 500);
 
   useEffect(() => {
+    resetTypes();
+  }, []);
+
+  useEffect(() => {
     refreshCategories();
-  }, [debounceSearch, types]);
+  }, [debounceSearch, typeFilter]);
 
   const spendingCategories = useMemo(() => {
     return categories.data.filter((c) => c.type_id === 1);
-  }, [categories]);
+  }, [categories.data]);
   const savingCategories = useMemo(() => {
     return categories.data.filter((c) => c.type_id === 2);
-  }, [categories]);
+  }, [categories.data]);
+
+  async function resetTypes() {
+    const typesData = await getTypes();
+    setTypes(typesData);
+
+    const types: { [key: string]: boolean } = {};
+    for (const t of typesData) {
+      types[t.name!] = true;
+    }
+    setTypeFilter(types);
+  }
 
   async function refreshCategories() {
     const debounceSearchTrim = debounceSearch.trim();
     const search = debounceSearchTrim || undefined;
 
     const filter: number[] = [];
-    if (types.spending) {
-      filter.push(1);
-    }
-    if (types.saving) {
-      filter.push(2);
+    for (const [key, value] of Object.entries(typeFilter)) {
+      if (!value) continue;
+      const id = types.find((t) => t.name === key)?.id;
+      if (!id) continue;
+      filter.push(id);
     }
 
     setCategories((prev) => ({ ...prev, isLoading: true }));
@@ -83,7 +100,7 @@ export default function Categories() {
         <button
           type="button"
           onClick={() => setIsOpenAddSheet(true)}
-          className="p-1"
+          className="p-1 cursor-pointer"
         >
           <AddIcon />
         </button>
@@ -102,7 +119,7 @@ export default function Categories() {
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-1 text-lg"
+          className="p-1 text-lg cursor-pointer"
         >
           <FilterIcon />
         </button>
@@ -119,7 +136,7 @@ export default function Categories() {
                     <button
                       key={c.id}
                       onClick={() => setEditCategory(c)}
-                      className="w-full flex items-center gap-x-2"
+                      className="w-full flex items-center gap-x-2 cursor-pointer"
                     >
                       <div
                         className="w-8 h-8 rounded-full"
@@ -139,7 +156,7 @@ export default function Categories() {
                     <button
                       key={c.id}
                       onClick={() => setEditCategory(c)}
-                      className="w-full flex items-center gap-x-2"
+                      className="w-full flex items-center gap-x-2 cursor-pointer"
                     >
                       <div
                         className="w-8 h-8 rounded-full"
@@ -173,8 +190,8 @@ export default function Categories() {
       <CategoryFilterSheet
         isOpen={isOpenFilterSheet}
         close={() => setIsOpenFilterSheet(false)}
-        types={types}
-        setTypes={setTypes}
+        types={typeFilter}
+        setTypes={setTypeFilter}
       />
     </>
   );
