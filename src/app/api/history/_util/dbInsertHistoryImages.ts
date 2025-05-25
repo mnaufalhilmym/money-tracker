@@ -5,6 +5,8 @@ export async function insertHistoryImagesTx(
   historyId: number,
   savedImages: SavedImage[]
 ) {
+  if (!savedImages.length) return;
+
   let insertHistoryImagesSql =
     "INSERT INTO history_images" + " (history_id, image_id)" + " VALUES";
   const insertHistoryImagesParams = [];

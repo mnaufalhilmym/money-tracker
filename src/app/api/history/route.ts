@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       " WHERE h.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
     if (search) {
-      queryParams.push(`(%${search}%)`);
+      queryParams.push(`%${search}%`);
       querySql += ` AND h.description ILIKE $${queryParams.length}`;
     }
 

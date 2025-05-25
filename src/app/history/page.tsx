@@ -33,6 +33,8 @@ async function getHistory(params?: { search?: string; filter?: number[] }) {
 }
 
 export default function History() {
+  const [isInitialize, setIsInitialize] = useState(true);
+
   const [types, setTypes] = useState<TypeI[]>([]);
   const [categories, setCategories] = useState<CategoryI[]>([]);
   const [wallets, setWallets] = useState<WalletI[]>([]);
@@ -54,8 +56,9 @@ export default function History() {
   }, []);
 
   useEffect(() => {
+    if (isInitialize) return;
     refreshHistory();
-  }, [debounceSearch, typeFilter]);
+  }, [isInitialize, debounceSearch, typeFilter]);
 
   const groupedHistories = useMemo(() => {
     const grouped = new Map<string, HistoryI[]>();
@@ -86,7 +89,14 @@ export default function History() {
     return grouped;
   }, [history.data]);
 
+  useEffect(() => {
+    if (isInitialize) return;
+    setHistory((prev) => ({ ...prev, isLoading: false }));
+  }, [groupedHistories, types]);
+
   async function resetTypesCategoriesWallets() {
+    setIsInitialize(true);
+
     const typeData = await getTypes();
     setTypes(typeData);
 
@@ -114,6 +124,8 @@ export default function History() {
     );
     const wallets: WalletI[] = await respWallets.json();
     setWallets(wallets);
+
+    setIsInitialize(false);
   }
 
   async function refreshHistory() {
@@ -130,7 +142,7 @@ export default function History() {
 
     setHistory((prev) => ({ ...prev, isLoading: true }));
     const data = await getHistory({ search, filter });
-    setHistory({ data, isLoading: false });
+    setHistory((prev) => ({ ...prev, data }));
   }
 
   return (
@@ -156,7 +168,7 @@ export default function History() {
             type="text"
             placeholder="Search history"
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full outline-none"
+            className="w-full outline-none placeholder:text-neutral-500"
           />
         </div>
         <button

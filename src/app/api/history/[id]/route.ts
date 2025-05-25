@@ -13,14 +13,14 @@ import { validateCategoryId, validateWalletId } from "../_util/validation";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const token = getTokenCookie(request);
 
   try {
     const tokenData = await processToken(token);
 
-    const id = params.id;
+    const { id } = await params;
 
     await createHistoryImagesTableIfNotExists();
 
@@ -31,7 +31,8 @@ export async function GET(
         " JOIN categories c ON c.id = h.category_id" +
         " JOIN types t ON t.id = c.type_id" +
         " LEFT JOIN history_images hi ON hi.history_id = h.id" +
-        " WHERE h.id = $1 AND h.user_id = $2",
+        " WHERE h.id = $1 AND h.user_id = $2" +
+        " GROUP BY h.id, t.id, w.id, c.id",
       [id, tokenData.userId]
     );
 
@@ -49,28 +50,38 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const token = getTokenCookie(request);
 
   try {
     const tokenData = await processToken(token);
 
-    const id = Number(params.id);
+    const { id: idStr } = await params;
+    const id = Number(idStr);
 
     const { fields, files } = await parseFormData(request);
 
     const {
-      description,
-      wallet_id,
-      category_id,
-      datetime,
-      amount,
+      description: descriptions,
+      wallet_id: wallet_ids,
+      category_id: category_ids,
+      datetime: datetimes,
+      amount: amounts,
       image_ids,
-      location,
-      location_name,
-      location_display_name,
+      location: locations,
+      location_name: location_names,
+      location_display_name: location_display_names,
     } = fields;
+
+    const description = descriptions?.[0];
+    const wallet_id = wallet_ids?.[0];
+    const category_id = category_ids?.[0];
+    const datetime = datetimes?.[0];
+    const amount = amounts?.[0];
+    const location = locations?.[0];
+    const location_name = location_names?.[0];
+    const location_display_name = location_display_names?.[0];
 
     let uploadedImages: formidable.File[] = [];
     if (files.images) {

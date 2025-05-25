@@ -114,7 +114,7 @@ export default function Wallets() {
             type="text"
             placeholder="Search wallet"
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full outline-none"
+            className="w-full outline-none placeholder:text-neutral-500"
           />
         </div>
         <button

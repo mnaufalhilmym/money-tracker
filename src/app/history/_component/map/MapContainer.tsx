@@ -179,7 +179,7 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
           onFocus={() =>
             searchLocation ? setIsShowSearchResult(true) : undefined
           }
-          className="w-full outline-none"
+          className="w-full outline-none placeholder:text-neutral-500"
         />
       </div>
 

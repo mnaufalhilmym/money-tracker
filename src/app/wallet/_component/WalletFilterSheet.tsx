@@ -35,13 +35,13 @@ export default function WalletFilterSheet(props: Readonly<Props>) {
         <div>
           <p className="font-bold">Type</p>
           <div className="mt-1 space-y-1">
-            {Object.entries(props.types).map(([key, value]) => (
+            {Object.entries(types).map(([key, value]) => (
               <CheckboxInput
                 key={key}
                 checked={value}
                 onClick={() =>
-                  props.setTypes({
-                    ...props.types,
+                  setTypes({
+                    ...types,
                     [key]: !value,
                   })
                 }

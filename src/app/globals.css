@@ -17,3 +17,8 @@
   background-color: darkgray;
   border-radius: 4px;
 }
+
+.calendar-picker-color-invert::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* Inverts the icon color */
+  cursor: pointer;
+}

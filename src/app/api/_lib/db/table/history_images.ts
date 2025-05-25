@@ -15,7 +15,7 @@ export default async function createHistoryImagesTableIfNotExists() {
   await pool.query(
     "CREATE TABLE IF NOT EXISTS history_images (" +
       "history_id INTEGER NOT NULL," +
-      "image_id TEXT NOT NULL" +
+      "image_id UUID NOT NULL" +
       ")"
   );
 

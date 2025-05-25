@@ -12,7 +12,8 @@ export async function selectHistoryTx(
       " JOIN categories c ON c.id = h.category_id" +
       " JOIN types t ON t.id = c.type_id" +
       " LEFT JOIN history_images hi ON hi.history_id = h.id" +
-      " WHERE h.id = $1 AND h.user_id = $2",
+      " WHERE h.id = $1 AND h.user_id = $2" +
+      " GROUP BY h.id, t.id, w.id, c.id",
     [id, userId]
   );
 }

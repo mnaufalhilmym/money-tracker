@@ -90,12 +90,12 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
           <div>
             <p className="font-bold">Name</p>
             <input
-              className="outline-none w-full mt-0.5 border-b border-white/20 focus:border-white"
               placeholder="Example: Food"
               value={value?.name ?? ""}
               onChange={(e) =>
                 setValue((prev) => ({ ...prev, name: e.target.value }))
               }
+              className="outline-none w-full mt-0.5 border-b border-white/20 focus:border-white placeholder:text-neutral-500"
             />
           </div>
 

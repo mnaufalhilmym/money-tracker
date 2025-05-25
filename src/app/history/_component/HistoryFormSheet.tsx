@@ -20,6 +20,8 @@ import HistoryWalletPickerSheet from "./HistoryWalletPickerSheet";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import toTitleCase from "@/util/titleCase";
 import toFormData from "@/util/formData";
+import DescriptionInput from "./form/DescriptionInput";
+import DateTimeInput from "./form/DateTimeInput";
 
 interface Props {
   isOpen: boolean;
@@ -66,7 +68,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
   );
 
   useEffect(() => {
-    if (props.isOpen) {
+    if (props.isOpen && props.types.length) {
       const t = props.types[0];
       let c: CategoryI = {};
       if (t.id) {
@@ -209,21 +211,24 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </Button>
           </div>
 
+          <DateTimeInput
+            value={value.datetime}
+            setValue={(v) => setValue((prev) => ({ ...prev, datetime: v }))}
+          />
+
           <AmountInput
             value={value.amount}
             setValue={(v) => setValue((prev) => ({ ...prev, amount: v }))}
           />
 
           <div className="flex items-center gap-x-4">
-            <input
-              type="text"
-              placeholder="Description"
-              value={value.description ?? ""}
-              onChange={(e) =>
-                setValue((prev) => ({ ...prev, description: e.target.value }))
+            <DescriptionInput
+              value={value.description}
+              setValue={(v) =>
+                setValue((prev) => ({ ...prev, description: v }))
               }
-              className="outline-none w-full text-center"
             />
+
             <div className="flex items-center gap-x-2">
               <WalletPicker onClick={() => setIsShowWalletPicker(true)} />
               <ImagesPicker
@@ -325,8 +330,22 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
             </div>
           )}
 
-          <Button type="submit" loading={isLoadingSubmit}>
-            Add
+          <Button
+            type="submit"
+            disable={
+              !value.type_id ||
+              !value.type_name ||
+              !value.category_id ||
+              !value.category_name ||
+              !value.datetime ||
+              !value.amount ||
+              !value.description ||
+              !value.wallet_id ||
+              !value.wallet_name
+            }
+            loading={isLoadingSubmit}
+          >
+            {props.history ? "Edit" : "Add"}
           </Button>
         </form>
       </BottomSheet>

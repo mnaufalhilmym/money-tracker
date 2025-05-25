@@ -17,7 +17,7 @@ export default function AmountInput(props: Readonly<Props>) {
       value={props.value ? String(props.value) : ""}
       onChange={onChange}
       placeholder="0"
-      className="outline-none w-full font-bold text-center text-4xl input-no-spinner"
+      className="outline-none w-full font-bold text-center text-4xl input-no-spinner placeholder:text-neutral-500"
     />
   );
 }
