@@ -2,7 +2,7 @@ import Button from "@/component/button/Button";
 import CheckboxInput from "@/component/input/CheckboxInput";
 import BottomSheet from "@/component/sheet/BottomSheet";
 import toTitleCase from "@/util/titleCase";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 interface Props {
   isOpen: boolean;
@@ -22,6 +22,18 @@ interface Props {
 export default function HistoryFilterSheet(props: Readonly<Props>) {
   const [filter, setFilter] = useState(props.filter ?? {});
 
+  const isFilterTypesExists = useMemo(() => {
+    return !!Object.keys(props.filter.types).length;
+  }, [props.filter.types]);
+
+  const isFilterWalletsExists = useMemo(() => {
+    return !!Object.keys(props.filter.wallets).length;
+  }, [props.filter.wallets]);
+
+  const isFilterCategoriesExists = useMemo(() => {
+    return !!Object.keys(props.filter.categories).length;
+  }, [props.filter.categories]);
+
   useEffect(() => {
     if (props.isOpen) {
       setFilter(props.filter);
@@ -40,7 +52,7 @@ export default function HistoryFilterSheet(props: Readonly<Props>) {
       <p className="font-bold text-center text-lg">Choose Filter</p>
 
       <form onSubmit={onSubmit} className="mt-2 space-y-4">
-        {filter.types && (
+        {isFilterTypesExists && (
           <div>
             <p className="font-bold">Type</p>
             <div className="mt-1 space-y-1">
@@ -65,7 +77,7 @@ export default function HistoryFilterSheet(props: Readonly<Props>) {
           </div>
         )}
 
-        {filter.wallets && (
+        {isFilterWalletsExists && (
           <div>
             <p className="font-bold">Wallet</p>
             <div className="mt-1 space-y-1">
@@ -90,7 +102,7 @@ export default function HistoryFilterSheet(props: Readonly<Props>) {
           </div>
         )}
 
-        {filter.categories && (
+        {isFilterCategoriesExists && (
           <div>
             <p className="font-bold">Category</p>
             <div className="mt-1 space-y-1">
