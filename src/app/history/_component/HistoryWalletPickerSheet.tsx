@@ -35,7 +35,7 @@ export default function HistoryWalletPickerSheet(props: Readonly<Props>) {
       <div className="mt-2">
         {props.wallets.map((w) => (
           <button
-            key={w.id}
+            key={`wallet_${w.id}`}
             type="button"
             onClick={() => setWallet(w)}
             className={`block w-full p-1 text-center ${

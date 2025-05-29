@@ -113,6 +113,7 @@ export default function Wallets() {
           <input
             type="text"
             placeholder="Search wallet"
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full outline-none placeholder:text-neutral-500"
           />

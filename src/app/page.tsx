@@ -9,6 +9,21 @@ import { useEffect, useState } from "react";
 import getAuthData from "./_fetchData/getAuthData";
 import getTypes from "@/util/fetchData/getTypes";
 import TypeSwitcher from "./_component/TypeSwitcher";
+import WalletPicker from "./_component/WalletPicker";
+import getWallets from "@/util/fetchData/getWallets";
+import getCategories from "@/util/fetchData/getCategories";
+import CategoryPicker from "./_component/CategoryPicker";
+
+interface HomeDataI<T> {
+  isLoading: boolean;
+  active?: { id: number; name: string };
+  data: T[];
+}
+
+const initialHomeData = {
+  isLoading: true,
+  data: [],
+};
 
 export default function Home() {
   const [authData, setAuthData] = useState<{
@@ -17,14 +32,10 @@ export default function Home() {
   }>({
     isLoading: true,
   });
-  const [types, setTypes] = useState<{
-    isLoading: boolean;
-    activeTypeId?: number;
-    data: TypeI[];
-  }>({
-    isLoading: true,
-    data: [],
-  });
+  const [type, setType] = useState<HomeDataI<TypeI>>(initialHomeData);
+  const [wallet, setWallet] = useState<HomeDataI<WalletI>>(initialHomeData);
+  const [category, setCategory] =
+    useState<HomeDataI<CategoryI>>(initialHomeData);
 
   useEffect(() => {
     refreshData();
@@ -32,50 +43,60 @@ export default function Home() {
 
   async function refreshData() {
     setAuthData({ isLoading: true });
-    setTypes({ isLoading: true, data: [] });
+    setType({ isLoading: true, data: [] });
 
     const [authData, types] = await Promise.all([getAuthData(), getTypes()]);
 
     setAuthData({ data: authData, isLoading: false });
-    setTypes({ data: types, activeTypeId: types?.[0].id, isLoading: false });
+    setType({
+      data: types,
+      active: types?.[0]
+        ? { id: types[0].id!, name: types[0].name! }
+        : undefined,
+      isLoading: false,
+    });
+
+    const filterQueryParams: { key: string; value: number }[] = [];
+    types.forEach((t) => {
+      filterQueryParams.push({ key: "f", value: t.id! });
+    });
+
+    const [wallets, categories] = await Promise.all([
+      getWallets(filterQueryParams),
+      getCategories(filterQueryParams),
+    ]);
+
+    setWallet({ data: wallets, isLoading: false });
+    setCategory({ data: categories, isLoading: false });
   }
 
   return (
     <>
       <HomeHeader isLoading={authData.isLoading} name={authData.data?.name} />
 
-      <div className="p-1 mt-4 rounded-full bg-white/20 border border-white/20 overflow-hidden">
+      <div className="mt-4">
         <TypeSwitcher
-          isLoading={types.isLoading}
-          activeId={types.activeTypeId}
-          setActiveId={(id) =>
-            setTypes((prev) => ({ ...prev, activeTypeId: id }))
-          }
-          data={types.data}
+          isLoading={type.isLoading}
+          active={type.active}
+          setActive={(d) => setType((prev) => ({ ...prev, active: d }))}
+          data={type.data}
         />
       </div>
 
-      <div className="mt-4 flex items-center gap-x-4">
-        <div className="flex items-center gap-x-2">
-          <p>Wallet:</p>
-          <button
-            type="button"
-            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
-          >
-            <span>All</span>
-            <ChevronDownIcon />
-          </button>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <p>Category:</p>
-          <button
-            type="button"
-            className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
-          >
-            <span>All</span>
-            <ChevronDownIcon />
-          </button>
-        </div>
+      <div className="mt-4 flex items-center gap-x-4 gap-y-2 flex-wrap">
+        <WalletPicker
+          isLoading={wallet.isLoading}
+          active={wallet.active}
+          setActive={(d) => setWallet((prev) => ({ ...prev, active: d }))}
+          data={wallet.data}
+        />
+
+        <CategoryPicker
+          isLoading={category.isLoading}
+          active={category.active}
+          setActive={(d) => setCategory((prev) => ({ ...prev, active: d }))}
+          data={category.data}
+        />
       </div>
 
       <div className="flex items-center justify-between gap-x-4 mt-4">

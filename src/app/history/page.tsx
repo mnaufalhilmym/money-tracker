@@ -13,6 +13,8 @@ import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import NotFound from "@/component/notFound/NotFound";
 import Loading from "@/component/loading/Loading";
 import getTypes from "@/util/fetchData/getTypes";
+import getWallets from "@/util/fetchData/getWallets";
+import getCategories from "@/util/fetchData/getCategories";
 
 async function getHistory(params?: {
   search?: string;
@@ -138,22 +140,8 @@ export default function History() {
     });
 
     const [wallets, categories] = await Promise.all([
-      (async () => {
-        const respWallets = await clientInternalApiCall(
-          "/api/wallet",
-          filterQueryParams
-        );
-        const wallets: WalletI[] = await respWallets.json();
-        return wallets;
-      })(),
-      (async () => {
-        const respCategories = await clientInternalApiCall(
-          "/api/category",
-          filterQueryParams
-        );
-        const categories: CategoryI[] = await respCategories.json();
-        return categories;
-      })(),
+      getWallets(filterQueryParams),
+      getCategories(filterQueryParams),
     ]);
 
     setWallets(wallets);
@@ -239,6 +227,7 @@ export default function History() {
           <input
             type="text"
             placeholder="Search history"
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full outline-none placeholder:text-neutral-500"
           />

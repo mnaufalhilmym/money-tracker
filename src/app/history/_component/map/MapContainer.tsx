@@ -58,9 +58,9 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
 
   useEffect(() => {
     if (!mapRef.current) return;
-    setSearchLocation("")
-    setSearchResult([])
-    setIsShowSearchResult(false)
+    setSearchLocation("");
+    setSearchResult([]);
+    setIsShowSearchResult(false);
 
     if (props.location) {
       setPosition([props.location.lat, props.location.lng]);
@@ -209,6 +209,7 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
           <input
             type="text"
             placeholder="Search location"
+            value={searchLocation}
             onChange={onChangeSearch}
             onFocus={() =>
               searchLocation ? setIsShowSearchResult(true) : undefined

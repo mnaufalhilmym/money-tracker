@@ -112,6 +112,7 @@ export default function Categories() {
           <input
             type="text"
             placeholder="Search category"
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full outline-none placeholder:text-neutral-500"
           />
