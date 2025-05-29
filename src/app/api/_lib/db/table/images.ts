@@ -12,6 +12,7 @@ export default async function migrateImagesTable(
     await client.query(
       "CREATE TABLE IF NOT EXISTS images (" +
         "id UUID PRIMARY KEY," +
+        "user_id TEXT NOT NULL," +
         "file_name TEXT NOT NULL," +
         "content_type TEXT NOT NULL," +
         "size BIGINT NOT NULL," +

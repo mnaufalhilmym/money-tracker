@@ -7,7 +7,13 @@ export default function toFormData(
     if (value !== undefined && value !== null) {
       const formattedValue = formatValue(value);
       if (formattedValue) {
-        formData.append(key, formattedValue);
+        if (Array.isArray(formattedValue)) {
+          for (const value of formattedValue) {
+            formData.append(key, value);
+          }
+        } else {
+          formData.append(key, formattedValue);
+        }
       }
     }
   }
@@ -30,6 +36,14 @@ function formatValue(value: any) {
     case "string":
       return value;
     case "object":
+      if (Array.isArray(value)) {
+        const formatted = [];
+        for (const v of value) {
+          const val: any = formatValue(v);
+          formatted.push(val);
+        }
+        return formatted;
+      }
       return JSON.stringify(value);
     case "undefined":
       return undefined;

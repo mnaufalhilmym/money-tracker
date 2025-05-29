@@ -20,6 +20,7 @@ export default function ImagesPicker(props: Readonly<Props>) {
     } else {
       props.setImageList([]);
     }
+    e.target.value = "";
   }
 
   return (

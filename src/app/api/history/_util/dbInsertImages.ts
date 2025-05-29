@@ -2,13 +2,14 @@ import { PoolClient } from "pg";
 
 export async function insertImagesTx(
   client: PoolClient,
-  savedImages: SavedImage[]
+  savedImages: SavedImage[],
+  userId: string
 ) {
   if (!savedImages.length) return;
 
   let insertImagesSql =
     "INSERT INTO images" +
-    " (id, file_name, content_type, size, driver, path)" +
+    " (id, user_id, file_name, content_type, size, driver, path)" +
     " VALUES";
   const insertImagesParams = [];
   for (const [idx, savedImage] of savedImages.entries()) {
@@ -17,6 +18,7 @@ export async function insertImagesTx(
     }
     insertImagesParams.push(
       savedImage.id,
+      userId,
       savedImage.fileName,
       savedImage.contentType,
       savedImage.size,
@@ -25,12 +27,13 @@ export async function insertImagesTx(
     );
     insertImagesSql +=
       " (" +
-      `$${idx * 6 + 1},` +
-      `$${idx * 6 + 2},` +
-      `$${idx * 6 + 3},` +
-      `$${idx * 6 + 4},` +
-      `$${idx * 6 + 5},` +
-      `$${idx * 6 + 6}` +
+      `$${idx * 7 + 1},` +
+      `$${idx * 7 + 2},` +
+      `$${idx * 7 + 3},` +
+      `$${idx * 7 + 4},` +
+      `$${idx * 7 + 5},` +
+      `$${idx * 7 + 6},` +
+      `$${idx * 7 + 7}` +
       ")";
   }
 

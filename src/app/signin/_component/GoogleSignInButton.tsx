@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import LoadingIcon from "../icon/LoadingIcon";
+import LoadingIcon from "../../../component/icon/LoadingIcon";
 
 export default function GoogleSignInButton() {
   const divRef = useRef<HTMLDivElement>(null);

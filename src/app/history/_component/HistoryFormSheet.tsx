@@ -35,7 +35,7 @@ interface Props {
 
 export default function HistoryFormSheet(props: Readonly<Props>) {
   const { width: maxWidth, height: maxHeight } = useWindowInnerSize();
-  const attributeMaxHeight = maxHeight * 0.9 - 288;
+  const attributeMaxHeight = maxHeight * 0.9 - 323;
 
   const [value, setValue] = useState<HistoryI>(props.history ?? {});
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
@@ -47,7 +47,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
       }[]
   >([]);
   const [formImagePreviews, setFormImagePreviews] = useState<
-    { id: string; url: string; name: string }[]
+    { id: string; url: string; name: string; uploaded?: true }[]
   >([]);
   const [selectedImagePreview, setSelectedImagePreview] = useState<{
     id: string;
@@ -90,7 +90,26 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     let isCancelled = false;
 
     const updatePreviews = async () => {
-      const previews: { id: string; url: string; name: string }[] = [];
+      const previews: {
+        id: string;
+        url: string;
+        name: string;
+        uploaded?: true;
+      }[] = [];
+
+      if (value.images) {
+        for (const image of value.images) {
+          previews.push({
+            id: image.id,
+            url: new URL(
+              `/api/image/${image.id}`,
+              process.env.NEXT_PUBLIC_SITE_URL
+            ).href,
+            name: image.file_name,
+            uploaded: true,
+          });
+        }
+      }
 
       for (const image of formImageList) {
         if (isCancelled) break;
@@ -114,7 +133,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     return () => {
       isCancelled = true;
     };
-  }, [formImageList]);
+  }, [formImageList, value.images]);
 
   function close() {
     if (isLoadingSubmit) return;
@@ -157,12 +176,20 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
     props.refreshHistory();
   }
 
-  function removeFormImage(
+  function removeImage(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    id: string
+    id: string,
+    uploaded?: true
   ) {
     e.stopPropagation();
-    setFormImageList((prev) => [...prev.filter((f) => f.id !== id)]);
+    if (uploaded) {
+      setValue((prev) => ({
+        ...prev,
+        images: prev.images?.filter((img) => img.id !== id),
+      }));
+    } else {
+      setFormImageList((prev) => [...prev.filter((f) => f.id !== id)]);
+    }
   }
 
   function selectImagePreview(image: {
@@ -288,7 +315,9 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
                         />
                         <button
                           type="button"
-                          onClick={(e) => removeFormImage(e, image.id)}
+                          onClick={(e) =>
+                            removeImage(e, image.id, image.uploaded)
+                          }
                           className="absolute right-0.5 top-0.5 p-0.5 bg-black/60 rounded-full text-xs cursor-pointer"
                         >
                           <CloseIcon />
@@ -395,7 +424,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
       <HistoryWalletPickerSheet
         isOpen={isShowWalletPicker}
         close={() => setIsShowWalletPicker(false)}
-        wallets={props.wallets.filter((w) => w.id === value.type_id)}
+        wallets={props.wallets.filter((w) => w.type_id === value.type_id)}
         wallet={value.wallet_id}
         setWallet={(w) =>
           setValue((prev) => ({

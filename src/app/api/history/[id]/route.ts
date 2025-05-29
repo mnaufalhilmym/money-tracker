@@ -37,7 +37,7 @@ export async function GET(
         " c.color category_color," +
         " h.datetime," +
         " h.amount," +
-        " ARRAY_AGG(hi.image_id) image_ids," +
+        " ARRAY_AGG(JSON_BUILD_OBJECT('id', i.id, 'file_name', i.file_name)) FILTER (WHERE i.id IS NOT NULL) images," +
         " CASE WHEN h.location IS NOT NULL THEN JSON_BUILD_OBJECT('lat', ST_Y(h.location::geometry), 'lng', ST_X(h.location::geometry)) ELSE NULL END location," +
         " h.location_name," +
         " h.location_display_name" +
@@ -46,6 +46,7 @@ export async function GET(
         " JOIN categories c ON c.id = h.category_id" +
         " JOIN types t ON t.id = c.type_id" +
         " LEFT JOIN history_images hi ON hi.history_id = h.id" +
+        " LEFT JOIN images i ON i.id = hi.image_id AND i.user_id = h.user_id" +
         " WHERE h.id = $1 AND h.user_id = $2" +
         " GROUP BY h.id, t.id, w.id, c.id",
       [id, tokenData.userId]
@@ -83,7 +84,7 @@ export async function PUT(
       category_id: category_ids,
       datetime: datetimes,
       amount: amounts,
-      image_ids,
+      images,
       location: locations,
       location_name: location_names,
       location_display_name: location_display_names,
@@ -94,6 +95,13 @@ export async function PUT(
     const category_id = category_ids![0];
     const datetime = datetimes![0];
     const amount = amounts![0];
+    const imageArrObj = [];
+    if (images) {
+      for (const image of images) {
+        const imgObj: { id: string; file_name: string } = JSON.parse(image);
+        imageArrObj.push(imgObj);
+      }
+    }
     const location = locations?.[0]
       ? (JSON.parse(locations[0]) as HistoryLocationI)
       : undefined;
@@ -153,28 +161,33 @@ export async function PUT(
 
       const toBeDeletedImages = [];
 
-      if (image_ids?.length) {
-        const historyImages = await client.query<HistoryImageI>(
-          "SELECT h.id history_id, hi.image_id, i.path image_path" +
-            " FROM history_images hi" +
-            " JOIN history h ON h.id = hi.history_id" +
-            " JOIN images i ON i.id = hi.image_id" +
-            " WHERE h.id = $1 AND h.user_id = $2",
-          [id, tokenData.userId]
-        );
-        for (const historyImage of historyImages.rows) {
-          if (!image_ids.includes(historyImage.image_id!)) {
-            toBeDeletedImages.push({
-              id: historyImage.image_id,
-              path: historyImage.image_path,
-            });
-          }
+      const historyImages = await client.query<HistoryImageI>(
+        "SELECT h.id history_id, hi.image_id, i.path image_path" +
+          " FROM history_images hi" +
+          " JOIN history h ON h.id = hi.history_id" +
+          " JOIN images i ON i.id = hi.image_id AND i.user_id = h.user_id" +
+          " WHERE h.id = $1 AND h.user_id = $2",
+        [id, tokenData.userId]
+      );
+      for (const historyImage of historyImages.rows) {
+        if (
+          imageArrObj.findIndex(
+            (image) => image.id === historyImage.image_id
+          ) === -1
+        ) {
+          toBeDeletedImages.push({
+            id: historyImage.image_id,
+            path: historyImage.image_path,
+          });
         }
-        if (toBeDeletedImages.length) {
-          const toBeDeletedImageIds = toBeDeletedImages.map((i) => i.id);
-          await client.query("DELETE FROM images WHERE id = ANY($1)", [
-            toBeDeletedImageIds,
-          ]);
+      }
+      if (toBeDeletedImages.length) {
+        const toBeDeletedImageIds = toBeDeletedImages.map((i) => i.id);
+        const deletedImage = await client.query(
+          "DELETE FROM images WHERE id = ANY($1) AND user_id = $2",
+          [toBeDeletedImageIds, tokenData.userId]
+        );
+        if (deletedImage.rowCount) {
           await client.query(
             "DELETE FROM history_images WHERE history_id = $1 AND image_id = ANY($2)",
             [id, toBeDeletedImageIds]
@@ -184,7 +197,7 @@ export async function PUT(
 
       savedImages = await saveImages(uploadedImages, tokenData.userId);
 
-      await insertImagesTx(client, savedImages);
+      await insertImagesTx(client, savedImages, tokenData.userId);
 
       await insertHistoryImagesTx(client, id, savedImages);
 
@@ -237,7 +250,7 @@ export async function DELETE(
         "SELECT h.id history_id, hi.image_id, i.path image_path" +
           " FROM history_images hi" +
           " JOIN history h ON h.id = hi.history_id" +
-          " JOIN images i ON i.id = hi.image_id" +
+          " JOIN images i ON i.id = hi.image_id AND i.user_id = h.user_id" +
           " WHERE h.id = $1 AND h.user_id = $2",
         [id, tokenData.userId]
       );
@@ -258,13 +271,16 @@ export async function DELETE(
       }
       if (toBeDeletedImages.length) {
         const toBeDeletedImageIds = toBeDeletedImages.map((i) => i.id);
-        await client.query("DELETE FROM images WHERE id = ANY($1)", [
-          toBeDeletedImageIds,
-        ]);
-        await client.query(
-          "DELETE FROM history_images WHERE history_id = $1 AND image_id = ANY($2)",
-          [id, toBeDeletedImageIds]
+        const deletedImage = await client.query(
+          "DELETE FROM images WHERE id = ANY($1) AND user_id = $2",
+          [toBeDeletedImageIds, tokenData.userId]
         );
+        if (deletedImage.rowCount) {
+          await client.query(
+            "DELETE FROM history_images WHERE history_id = $1 AND image_id = ANY($2)",
+            [id, toBeDeletedImageIds]
+          );
+        }
       }
 
       await client.query("COMMIT");

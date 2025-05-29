@@ -16,7 +16,7 @@ export async function insertHistoryImagesTx(
     }
     insertHistoryImagesParams.push(historyId, savedImage.id);
     insertHistoryImagesSql +=
-      " (" + `$${idx * 2 + 1}` + `$${idx * 2 + 2}` + ")";
+      " (" + `$${idx * 2 + 1},` + `$${idx * 2 + 2}` + ")";
   }
   await client.query(insertHistoryImagesSql, insertHistoryImagesParams);
 }

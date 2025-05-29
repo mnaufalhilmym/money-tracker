@@ -10,7 +10,7 @@ interface HistoryI {
   category_color?: string;
   datetime?: string;
   amount?: number;
-  image_ids?: string[];
+  images?: { id: string; file_name: string }[];
   location?: HistoryLocationI;
   location_name?: string;
   location_display_name?: string;

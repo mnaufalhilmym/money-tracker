@@ -17,14 +17,29 @@ import getTypes from "@/util/fetchData/getTypes";
 async function getHistory(params?: {
   search?: string;
   filterTypes?: number[];
+  filterWallets?: number[];
+  filterCategories?: number[];
 }) {
   const queryParams: { key: string; value: string | number }[] = [];
   if (params?.search) {
     queryParams.push({ key: "s", value: params.search });
   }
+
   if (params?.filterTypes && params.filterTypes.length > 0) {
     params.filterTypes.forEach((type) => {
       queryParams.push({ key: "ft", value: type });
+    });
+  }
+
+  if (params?.filterWallets && params.filterWallets.length > 0) {
+    params.filterWallets.forEach((wallet) => {
+      queryParams.push({ key: "fw", value: wallet });
+    });
+  }
+
+  if (params?.filterCategories && params.filterCategories.length > 0) {
+    params.filterCategories.forEach((category) => {
+      queryParams.push({ key: "fc", value: category });
     });
   }
 
@@ -48,8 +63,14 @@ export default function History() {
 
   const [isOpenAddSheet, setisOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
-  const [filter, setFilter] = useState<{ types: { [key: string]: boolean } }>({
+  const [filter, setFilter] = useState<{
+    types: { [key: string]: boolean };
+    wallets: { [key: string]: boolean };
+    categories: { [key: string]: boolean };
+  }>({
     types: {},
+    wallets: {},
+    categories: {},
   });
   const [editHistory, setEditHistory] = useState<HistoryI>();
 
@@ -66,7 +87,7 @@ export default function History() {
   }, [isInitialize, debounceSearch, filter]);
 
   const groupedHistories = useMemo(() => {
-    const grouped = new Map<string, HistoryI[]>();
+    const grouped = new Map<string, (HistoryI & { idx: number })[]>();
 
     if (!history.data.length) return grouped;
 
@@ -77,7 +98,7 @@ export default function History() {
     const todayKey = today.toLocaleDateString();
     const yesterdayKey = yesterday.toLocaleDateString();
 
-    history.data.forEach((h) => {
+    history.data.forEach((h, idx) => {
       if (h.datetime) {
         const date = new Date(h.datetime);
 
@@ -86,7 +107,9 @@ export default function History() {
         if (dateKey === yesterdayKey) dateKey = "Yesterday";
 
         if (!grouped.has(dateKey)) grouped.set(dateKey, []);
-        grouped.get(dateKey)!.push({ ...h, datetime: date.toLocaleString() });
+        grouped
+          .get(dateKey)!
+          .push({ ...h, idx, datetime: date.toLocaleString() });
       }
     });
 
@@ -96,7 +119,7 @@ export default function History() {
   useEffect(() => {
     if (isInitialize) return;
     setHistory((prev) => ({ ...prev, isLoading: false }));
-  }, [groupedHistories, types]);
+  }, [groupedHistories]);
 
   async function resetTypesCategoriesWallets() {
     setIsInitialize(true);
@@ -104,16 +127,27 @@ export default function History() {
     const typeData = await getTypes();
     setTypes(typeData);
 
-    const types: { [key: string]: boolean } = {};
+    const filterTypes: { [key: string]: boolean } = {};
     for (const t of typeData) {
-      types[t.name!] = true;
+      filterTypes[t.name!] = true;
     }
-    setFilter((prev) => ({ ...prev, types }));
 
     const filterQueryParams: { key: string; value: number }[] = [];
     typeData.forEach((t) => {
       filterQueryParams.push({ key: "f", value: t.id! });
     });
+
+    const respWallets = await clientInternalApiCall(
+      "/api/wallet",
+      filterQueryParams
+    );
+    const wallets: WalletI[] = await respWallets.json();
+    setWallets(wallets);
+
+    const filterWallets: { [key: string]: boolean } = {};
+    for (const w of wallets) {
+      filterWallets[w.name!] = true;
+    }
 
     const respCategories = await clientInternalApiCall(
       "/api/category",
@@ -122,12 +156,17 @@ export default function History() {
     const categories: CategoryI[] = await respCategories.json();
     setCategories(categories);
 
-    const respWallets = await clientInternalApiCall(
-      "/api/wallet",
-      filterQueryParams
-    );
-    const wallets: WalletI[] = await respWallets.json();
-    setWallets(wallets);
+    const filterCategories: { [key: string]: boolean } = {};
+    for (const c of categories) {
+      filterCategories[c.name!] = true;
+    }
+
+    setFilter((prev) => ({
+      ...prev,
+      types: filterTypes,
+      wallets: filterWallets,
+      categories: filterCategories,
+    }));
 
     setIsInitialize(false);
   }
@@ -144,8 +183,29 @@ export default function History() {
       filterTypes.push(id);
     }
 
+    const filterWallets: number[] = [];
+    for (const [key, value] of Object.entries(filter.wallets)) {
+      if (!value) continue;
+      const id = wallets.find((w) => w.name === key)?.id;
+      if (!id) continue;
+      filterWallets.push(id);
+    }
+
+    const filterCategories: number[] = [];
+    for (const [key, value] of Object.entries(filter.categories)) {
+      if (!value) continue;
+      const id = categories.find((c) => c.name === key)?.id;
+      if (!id) continue;
+      filterCategories.push(id);
+    }
+
     setHistory((prev) => ({ ...prev, isLoading: true }));
-    const data = await getHistory({ search, filterTypes });
+    const data = await getHistory({
+      search,
+      filterTypes,
+      filterWallets,
+      filterCategories,
+    });
     setHistory((prev) => ({ ...prev, data }));
   }
 
@@ -194,7 +254,7 @@ export default function History() {
                   {items.map((i) => (
                     <button
                       key={i.id}
-                      onClick={() => setEditHistory(i)}
+                      onClick={() => setEditHistory(history.data[i.idx])}
                       className="w-full flex items-center gap-x-2 text-left cursor-pointer"
                     >
                       <div

@@ -16,7 +16,8 @@ export default async function migrateCategoriesTable(
         "name TEXT NOT NULL," +
         "color TEXT NOT NULL," +
         "type_id INTEGER NOT NULL," +
-        "deleted_at TIMESTAMPTZ NULL" +
+        "deleted_at TIMESTAMPTZ NULL," +
+        "UNIQUE (user_id, name, deleted_at)" +
         ")"
     );
   }

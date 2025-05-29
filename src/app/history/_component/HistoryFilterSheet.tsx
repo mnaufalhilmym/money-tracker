@@ -7,8 +7,16 @@ import { FormEvent, useEffect, useState } from "react";
 interface Props {
   isOpen: boolean;
   close: () => void;
-  filter: { types: { [key: string]: boolean } };
-  setFilter: (filter: { types: { [key: string]: boolean } }) => void;
+  filter: {
+    types: { [key: string]: boolean };
+    wallets: { [key: string]: boolean };
+    categories: { [key: string]: boolean };
+  };
+  setFilter: (filter: {
+    types: { [key: string]: boolean };
+    wallets: { [key: string]: boolean };
+    categories: { [key: string]: boolean };
+  }) => void;
 }
 
 export default function HistoryFilterSheet(props: Readonly<Props>) {
@@ -45,6 +53,56 @@ export default function HistoryFilterSheet(props: Readonly<Props>) {
                       ...prev,
                       types: {
                         ...prev.types,
+                        [key]: !value,
+                      },
+                    }))
+                  }
+                >
+                  {toTitleCase(key)}
+                </CheckboxInput>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {filter.wallets && (
+          <div>
+            <p className="font-bold">Wallet</p>
+            <div className="mt-1 space-y-1">
+              {Object.entries(filter.wallets).map(([key, value]) => (
+                <CheckboxInput
+                  key={key}
+                  checked={value}
+                  onClick={() =>
+                    setFilter((prev) => ({
+                      ...prev,
+                      wallets: {
+                        ...prev.wallets,
+                        [key]: !value,
+                      },
+                    }))
+                  }
+                >
+                  {toTitleCase(key)}
+                </CheckboxInput>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {filter.categories && (
+          <div>
+            <p className="font-bold">Category</p>
+            <div className="mt-1 space-y-1">
+              {Object.entries(filter.categories).map(([key, value]) => (
+                <CheckboxInput
+                  key={key}
+                  checked={value}
+                  onClick={() =>
+                    setFilter((prev) => ({
+                      ...prev,
+                      categories: {
+                        ...prev.categories,
                         [key]: !value,
                       },
                     }))

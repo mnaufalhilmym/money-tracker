@@ -58,6 +58,9 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
 
   useEffect(() => {
     if (!mapRef.current) return;
+    setSearchLocation("")
+    setSearchResult([])
+    setIsShowSearchResult(false)
 
     if (props.location) {
       setPosition([props.location.lat, props.location.lng]);
@@ -217,7 +220,7 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
         {isShowSearchResult && (
           <div
             onClick={() => setIsShowSearchResult(false)}
-            className="mt-2 absolute z-1001 w-full"
+            className="mt-1.75 absolute z-1001 w-full"
             style={{ height: mapHeight }}
           >
             <div

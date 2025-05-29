@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
 
     const search = searchParams.get("s");
     const filterTypes = searchParams.getAll("ft");
+    const filterWallets = searchParams.getAll("fw");
+    const filterCategories = searchParams.getAll("fc");
 
     await dbMigrate();
 
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
       " c.color category_color," +
       " h.datetime," +
       " h.amount," +
-      " ARRAY_AGG(hi.image_id) image_ids," +
+      " ARRAY_AGG(JSON_BUILD_OBJECT('id', i.id, 'file_name', i.file_name)) FILTER (WHERE i.id IS NOT NULL) images," +
       " CASE WHEN h.location IS NOT NULL THEN JSON_BUILD_OBJECT('lat', ST_Y(h.location::geometry), 'lng', ST_X(h.location::geometry)) ELSE NULL END location," +
       " h.location_name," +
       " h.location_display_name" +
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
       " JOIN categories c ON c.id = h.category_id" +
       " JOIN types t ON t.id = c.type_id" +
       " LEFT JOIN history_images hi ON hi.history_id = h.id" +
+      " LEFT JOIN images i ON i.id = hi.image_id AND i.user_id = h.user_id" +
       " WHERE h.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
     if (search) {
@@ -60,6 +63,12 @@ export async function GET(request: NextRequest) {
 
     queryParams.push(filterTypes);
     querySql += ` AND t.id = ANY($${queryParams.length})`;
+
+    queryParams.push(filterWallets);
+    querySql += ` AND w.id = ANY($${queryParams.length})`;
+
+    queryParams.push(filterCategories);
+    querySql += ` AND c.id = ANY($${queryParams.length})`;
 
     querySql += " GROUP BY h.id, t.id, w.id, c.id";
 
@@ -129,7 +138,7 @@ export async function POST(request: NextRequest) {
 
       savedImages = await saveImages(uploadedImages, tokenData.userId);
 
-      await insertImagesTx(client, savedImages);
+      await insertImagesTx(client, savedImages, tokenData.userId);
 
       const insertQuery = await client.query<{ id: number }>(
         "INSERT INTO history" +
