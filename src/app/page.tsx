@@ -1,30 +1,58 @@
+"use client";
+
 import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
 import HomeHeader from "./_component/HomeHeader";
 import History from "./_component/History";
 import Categories from "./_component/Categories";
 import Wallets from "./_component/Wallets";
-import getAuthData from "./_action/getAuthData";
+import { useEffect, useState } from "react";
+import getAuthData from "./_fetchData/getAuthData";
+import getTypes from "@/util/fetchData/getTypes";
+import TypeSwitcher from "./_component/TypeSwitcher";
 
-export default async function Home() {
-  const authData = await getAuthData();
+export default function Home() {
+  const [authData, setAuthData] = useState<{
+    data?: AuthResponse;
+    isLoading: boolean;
+  }>({
+    isLoading: true,
+  });
+  const [types, setTypes] = useState<{
+    isLoading: boolean;
+    activeTypeId?: number;
+    data: TypeI[];
+  }>({
+    isLoading: true,
+    data: [],
+  });
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  async function refreshData() {
+    setAuthData({ isLoading: true });
+    setTypes({ isLoading: true, data: [] });
+
+    const [authData, types] = await Promise.all([getAuthData(), getTypes()]);
+
+    setAuthData({ data: authData, isLoading: false });
+    setTypes({ data: types, activeTypeId: types?.[0].id, isLoading: false });
+  }
 
   return (
     <>
-      <HomeHeader name={authData.name} />
+      <HomeHeader isLoading={authData.isLoading} name={authData.data?.name} />
 
-      <div className="flex p-1 mt-4 rounded-full bg-white/20 border border-white/20">
-        <button
-          type="button"
-          className="flex-1 py-2 px-4 bg-white text-black rounded-full cursor-pointer"
-        >
-          Spending
-        </button>
-        <button
-          type="button"
-          className="flex-1 py-2 px-4 rounded-full cursor-pointer"
-        >
-          Saving
-        </button>
+      <div className="p-1 mt-4 rounded-full bg-white/20 border border-white/20 overflow-hidden">
+        <TypeSwitcher
+          isLoading={types.isLoading}
+          activeId={types.activeTypeId}
+          setActiveId={(id) =>
+            setTypes((prev) => ({ ...prev, activeTypeId: id }))
+          }
+          data={types.data}
+        />
       </div>
 
       <div className="mt-4 flex items-center gap-x-4">

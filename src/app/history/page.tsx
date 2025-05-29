@@ -137,24 +137,32 @@ export default function History() {
       filterQueryParams.push({ key: "f", value: t.id! });
     });
 
-    const respWallets = await clientInternalApiCall(
-      "/api/wallet",
-      filterQueryParams
-    );
-    const wallets: WalletI[] = await respWallets.json();
+    const [wallets, categories] = await Promise.all([
+      (async () => {
+        const respWallets = await clientInternalApiCall(
+          "/api/wallet",
+          filterQueryParams
+        );
+        const wallets: WalletI[] = await respWallets.json();
+        return wallets;
+      })(),
+      (async () => {
+        const respCategories = await clientInternalApiCall(
+          "/api/category",
+          filterQueryParams
+        );
+        const categories: CategoryI[] = await respCategories.json();
+        return categories;
+      })(),
+    ]);
+
     setWallets(wallets);
+    setCategories(categories);
 
     const filterWallets: { [key: string]: boolean } = {};
     for (const w of wallets) {
       filterWallets[w.name!] = true;
     }
-
-    const respCategories = await clientInternalApiCall(
-      "/api/category",
-      filterQueryParams
-    );
-    const categories: CategoryI[] = await respCategories.json();
-    setCategories(categories);
 
     const filterCategories: { [key: string]: boolean } = {};
     for (const c of categories) {
