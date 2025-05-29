@@ -1,12 +1,14 @@
 "use client";
 
 import useWindowInnerSize from "@/hook/useWindowInnerSize";
+import { Property } from "csstype";
 import { ReactNode, useEffect, useRef, useState } from "react";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
   children: ReactNode;
+  zIndex?: Property.ZIndex;
 }
 
 const padding = 50;
@@ -130,11 +132,14 @@ export default function BottomSheet(props: Readonly<Props>) {
       className={`fixed left-0 right-0 bottom-0 top-0 max-w-md mx-auto transition-colors ${
         props.isOpen ? "bg-black/60" : "bg-black/0"
       } ${isShow ? "visible" : "invisible"}`}
+      style={{ zIndex: props.zIndex }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         onTransitionEnd={onTransitionEnd}
-        className="absolute bottom-0 w-full px-4 pt-2 pb-4 bg-zinc-800 rounded-t-2xl flex flex-col"
+        className={`absolute bottom-0 w-full px-4 pt-2 pb-4 bg-zinc-800 rounded-t-2xl flex flex-col ${
+          isDragging ? "transition-none" : "transition-transform duration-300"
+        }`}
         style={{
           transform: `translateY(${
             props.isOpen
@@ -142,7 +147,6 @@ export default function BottomSheet(props: Readonly<Props>) {
               : maxHeight
           }px)`,
           height: maxHeight,
-          transition: isDragging ? "none" : "transform 0.3s ease",
         }}
       >
         <button

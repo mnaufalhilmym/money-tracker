@@ -1,24 +1,22 @@
-import pool from "../db";
-import createTypesTableIfNotExists from "./types";
+import { PoolClient } from "pg";
 
-let hasRun = false;
+const migrationDatetimes = [new Date("2025-05-29T08:20:00+07:00")];
 
-export default async function createWalletsTableIfNotExists() {
-  if (hasRun) return;
+export default async function migrateWalletsTable(
+  client: PoolClient,
+  migrateDatetime: Date
+) {
+  if (migrateDatetime.getTime() === migrationDatetimes[0].getTime()) {
+    console.info("Running migrateWalletsTable for", migrationDatetimes[0]);
 
-  console.info("Running createWalletsTableIfNotExists");
-
-  await createTypesTableIfNotExists();
-
-  await pool.query(
-    "CREATE TABLE IF NOT EXISTS wallets (" +
-      "id SERIAL PRIMARY KEY," +
-      "user_id TEXT NOT NULL," +
-      "name TEXT NOT NULL," +
-      "type_id INTEGER NOT NULL," +
-      "deleted_at TIMESTAMPTZ NULL" +
-      ")"
-  );
-
-  hasRun = true;
+    await client.query(
+      "CREATE TABLE IF NOT EXISTS wallets (" +
+        "id SERIAL PRIMARY KEY," +
+        "user_id TEXT NOT NULL," +
+        "name TEXT NOT NULL," +
+        "type_id INTEGER NOT NULL," +
+        "deleted_at TIMESTAMPTZ NULL" +
+        ")"
+    );
+  }
 }

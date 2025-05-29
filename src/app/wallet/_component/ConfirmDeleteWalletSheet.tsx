@@ -34,11 +34,13 @@ export default function ConfirmDeleteWalletSheet(props: Readonly<Props>) {
   return (
     <BottomSheet isOpen={props.isOpen} close={close}>
       <p className="font-bold text-center text-lg">Delete Wallet</p>
+
       <p className="mt-2">
         Are you sure you want to delete{" "}
         <span className="font-bold">{props.wallet.name}</span> wallet? This
         action cannot be undone.
       </p>
+
       <div className="flex items-center gap-x-4 mt-2">
         <Button type="button" disable={isLoadingRemove} onClick={props.close}>
           Cancel

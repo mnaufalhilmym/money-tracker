@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import LoadingIcon from "../icon/LoadingIcon";
 
 export default function GoogleSignInButton() {
   const divRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (
@@ -36,13 +39,31 @@ export default function GoogleSignInButton() {
   async function signInCallback(
     credentialResponse: google.accounts.id.CredentialResponse
   ) {
-    await fetch("/api/auth/google", {
-      method: "POST",
-      body: JSON.stringify({ credential: credentialResponse.credential }),
-    });
+    try {
+      setIsLoading(true);
 
-    router.replace("/");
+      await fetch("/api/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+
+      router.replace("/");
+    } catch (err) {
+      console.error("Google signin failed", err);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  return <div ref={divRef} />;
+  return (
+    <>
+      <div ref={divRef} />
+
+      {isLoading && (
+        <div className="w-fit mt-4 mx-auto text-xl">
+          <LoadingIcon />
+        </div>
+      )}
+    </>
+  );
 }

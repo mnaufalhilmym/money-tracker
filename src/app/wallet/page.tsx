@@ -132,7 +132,7 @@ export default function Wallets() {
             {!!spendingWallets.length && (
               <div>
                 <p className="font-bold text-lg">Spending</p>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-2.5">
                   {spendingWallets.map((w) => (
                     <button
                       key={w.id}
@@ -148,7 +148,7 @@ export default function Wallets() {
             {!!savingWallets.length && (
               <div>
                 <p className="font-bold text-lg">Saving</p>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-2.5">
                   {savingWallets.map((w) => (
                     <button
                       key={w.id}

@@ -14,14 +14,17 @@ import NotFound from "@/component/notFound/NotFound";
 import Loading from "@/component/loading/Loading";
 import getTypes from "@/util/fetchData/getTypes";
 
-async function getHistory(params?: { search?: string; filter?: number[] }) {
+async function getHistory(params?: {
+  search?: string;
+  filterTypes?: number[];
+}) {
   const queryParams: { key: string; value: string | number }[] = [];
   if (params?.search) {
     queryParams.push({ key: "s", value: params.search });
   }
-  if (params?.filter && params.filter.length > 0) {
-    params.filter.forEach((filter) => {
-      queryParams.push({ key: "f", value: filter });
+  if (params?.filterTypes && params.filterTypes.length > 0) {
+    params.filterTypes.forEach((type) => {
+      queryParams.push({ key: "ft", value: type });
     });
   }
 
@@ -45,7 +48,9 @@ export default function History() {
 
   const [isOpenAddSheet, setisOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<{ [key: string]: boolean }>({});
+  const [filter, setFilter] = useState<{ types: { [key: string]: boolean } }>({
+    types: {},
+  });
   const [editHistory, setEditHistory] = useState<HistoryI>();
 
   const [search, setSearch] = useState("");
@@ -58,7 +63,7 @@ export default function History() {
   useEffect(() => {
     if (isInitialize) return;
     refreshHistory();
-  }, [isInitialize, debounceSearch, typeFilter]);
+  }, [isInitialize, debounceSearch, filter]);
 
   const groupedHistories = useMemo(() => {
     const grouped = new Map<string, HistoryI[]>();
@@ -75,14 +80,13 @@ export default function History() {
     history.data.forEach((h) => {
       if (h.datetime) {
         const date = new Date(h.datetime);
-        h.datetime = date.toLocaleString();
 
         let dateKey = date.toLocaleDateString();
         if (dateKey === todayKey) dateKey = "Today";
         if (dateKey === yesterdayKey) dateKey = "Yesterday";
 
         if (!grouped.has(dateKey)) grouped.set(dateKey, []);
-        grouped.get(dateKey)!.push(h);
+        grouped.get(dateKey)!.push({ ...h, datetime: date.toLocaleString() });
       }
     });
 
@@ -104,7 +108,7 @@ export default function History() {
     for (const t of typeData) {
       types[t.name!] = true;
     }
-    setTypeFilter(types);
+    setFilter((prev) => ({ ...prev, types }));
 
     const filterQueryParams: { key: string; value: number }[] = [];
     typeData.forEach((t) => {
@@ -132,16 +136,16 @@ export default function History() {
     const debounceSearchTrim = debounceSearch.trim();
     const search = debounceSearchTrim || undefined;
 
-    const filter: number[] = [];
-    for (const [key, value] of Object.entries(typeFilter)) {
+    const filterTypes: number[] = [];
+    for (const [key, value] of Object.entries(filter.types)) {
       if (!value) continue;
       const id = types.find((t) => t.name === key)?.id;
       if (!id) continue;
-      filter.push(id);
+      filterTypes.push(id);
     }
 
     setHistory((prev) => ({ ...prev, isLoading: true }));
-    const data = await getHistory({ search, filter });
+    const data = await getHistory({ search, filterTypes });
     setHistory((prev) => ({ ...prev, data }));
   }
 
@@ -186,22 +190,40 @@ export default function History() {
             {[...groupedHistories].map(([dateKey, items]) => (
               <div key={dateKey}>
                 <p className="font-bold text-lg">{dateKey}</p>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-2.5">
                   {items.map((i) => (
                     <button
                       key={i.id}
                       onClick={() => setEditHistory(i)}
-                      className="w-full flex items-center gap-x-2 justify-between text-left cursor-pointer"
+                      className="w-full flex items-center gap-x-2 text-left cursor-pointer"
                     >
-                      <div className="flex items-center gap-x-2">
-                        <div className="w-8 h-8 bg-red-500 rounded-full" />
-                        <div>
-                          <p className="font-bold">{i.description}</p>
-                          <p className="text-xs text-white/70">{i.datetime}</p>
+                      <div
+                        className="w-8 h-8 rounded-full"
+                        style={{ backgroundColor: i.category_color }}
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-x-2 justify-between">
+                          <div>
+                            <p className="font-bold">{i.description}</p>
+                            <p className="text-xs text-white/70">
+                              {i.datetime}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold">{i.amount}</p>
+                            <p className="text-xs text-white/70">
+                              {i.wallet_name} - {i.category_name}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <p className="font-bold">{i.amount}</p>
+                        {i.location_name && i.location_display_name && (
+                          <div>
+                            <p className="text-xs text-white/70 truncate">
+                              {i.location_name} • {i.location_display_name}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -231,8 +253,8 @@ export default function History() {
       <HistoryFilterSheet
         isOpen={isOpenFilterSheet}
         close={() => setIsOpenFilterSheet(false)}
-        types={typeFilter}
-        setTypes={setTypeFilter}
+        filter={filter}
+        setFilter={setFilter}
       />
     </>
   );

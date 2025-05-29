@@ -7,10 +7,16 @@ interface HistoryI {
   wallet_name?: string;
   category_id?: number;
   category_name?: string;
+  category_color?: string;
   datetime?: string;
   amount?: number;
   image_ids?: string[];
-  location?: { lat: number; lng: number };
+  location?: HistoryLocationI;
   location_name?: string;
   location_display_name?: string;
+}
+
+interface HistoryLocationI {
+  lat: number;
+  lng: number;
 }

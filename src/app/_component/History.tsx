@@ -11,7 +11,7 @@ export default function History() {
           <OpenIcon />
         </Link>
       </div>
-      <div className="mt-2 space-y-2">
+      <div className="mt-2 space-y-2.5">
         <div className="flex items-center gap-x-2 justify-between">
           <div className="flex items-center gap-x-2">
             <div className="w-8 h-8 bg-red-500 rounded-full" />

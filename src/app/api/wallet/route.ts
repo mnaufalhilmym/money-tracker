@@ -2,7 +2,7 @@ import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "../_lib/db/db";
-import createWalletsTableIfNotExists from "../_lib/db/table/wallets";
+import dbMigrate from "../_lib/db/migrate";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("s");
     const filters = searchParams.getAll("f");
 
-    await createWalletsTableIfNotExists();
+    await dbMigrate();
 
     let querySql =
       "SELECT w.id id, w.user_id user_id, w.name name, t.id type_id, t.name type_name" +
@@ -53,11 +53,13 @@ export async function POST(request: NextRequest) {
 
     const { name, type_id } = await request.json();
 
-    await createWalletsTableIfNotExists();
+    await dbMigrate();
 
     const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
+
       const insertQuery = await client.query<{ id: number }>(
         "INSERT INTO wallets (name, user_id, type_id) VALUES ($1, $2, $3) RETURNING id",
         [name, tokenData.userId, type_id]
@@ -73,11 +75,11 @@ export async function POST(request: NextRequest) {
         [id, tokenData.userId]
       );
 
-      client.query("COMMIT");
+      await client.query("COMMIT");
 
       return NextResponse.json(wallet.rows[0]);
     } catch (error) {
-      client.query("ROLLBACK");
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();

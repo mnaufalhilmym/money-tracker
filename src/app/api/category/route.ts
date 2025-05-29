@@ -1,8 +1,8 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import createCategoriesTableIfNotExists from "../_lib/db/table/categories";
 import pool from "../_lib/db/db";
+import dbMigrate from "../_lib/db/migrate";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("s");
     const filters = searchParams.getAll("f");
 
-    await createCategoriesTableIfNotExists();
+    await dbMigrate();
 
     let querySql =
       "SELECT c.id id, c.user_id user_id, c.name name, c.color color, t.id type_id, t.name type_name" +
@@ -53,11 +53,13 @@ export async function POST(request: NextRequest) {
 
     const { name, color, type_id } = await request.json();
 
-    await createCategoriesTableIfNotExists();
+    await dbMigrate();
 
     const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
+
       const insertQuery = await client.query<{ id: number }>(
         "INSERT INTO categories" +
           " (user_id, name, color, type_id)" +
@@ -76,11 +78,11 @@ export async function POST(request: NextRequest) {
         [id, tokenData.userId]
       );
 
-      client.query("COMMIT");
+      await client.query("COMMIT");
 
       return NextResponse.json(category.rows[0]);
     } catch (error) {
-      client.query("ROLLBACK");
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();

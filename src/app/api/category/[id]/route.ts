@@ -1,9 +1,9 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import createCategoriesTableIfNotExists from "../../_lib/db/table/categories";
 import pool from "../../_lib/db/db";
 import { selectCategory } from "../_util/dbSelectCategory";
+import dbMigrate from "../../_lib/db/migrate";
 
 export async function GET(
   request: NextRequest,
@@ -16,7 +16,7 @@ export async function GET(
 
     const { id } = await params;
 
-    await createCategoriesTableIfNotExists();
+    await dbMigrate();
 
     const category = await selectCategory(id, tokenData.userId);
 
@@ -45,11 +45,13 @@ export async function PUT(
 
     const { name, color, type_id } = await request.json();
 
-    await createCategoriesTableIfNotExists();
+    await dbMigrate();
 
     const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
+
       await client.query(
         "UPDATE categories SET" +
           " name = $1," +
@@ -70,9 +72,12 @@ export async function PUT(
         [id, tokenData.userId]
       );
 
+      await client.query("COMMIT");
+
       return NextResponse.json(category.rows[0]);
-    } catch {
-      client.query("ROLLBACK");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
     } finally {
       client.release();
     }
@@ -98,7 +103,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await createCategoriesTableIfNotExists();
+    await dbMigrate();
 
     await pool.query(
       "UPDATE categories SET deleted_at = NOW() WHERE id = $1 AND user_id = $2",

@@ -35,7 +35,8 @@ export async function saveImages(
     await fs.mkdir(imagePrefixPath, { recursive: true });
     const imagePath = path.join(imagePrefixPath, imageId);
 
-    await fs.rename(image.filepath, imagePath);
+    await fs.copyFile(image.filepath, imagePath); // allow saving file across different mounted file systems
+    await fs.unlink(image.filepath);
 
     savedImages.push({
       id: uuidv7(),

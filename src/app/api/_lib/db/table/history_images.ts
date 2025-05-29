@@ -1,23 +1,22 @@
-import pool from "../db";
-import createHistoryTableIfNotExists from "./history";
-import createImagesTableIfNotExists from "./images";
+import { PoolClient } from "pg";
 
-let hasRun = false;
+const migrationDatetimes = [new Date("2025-05-29T08:20:00+07:00")];
 
-export default async function createHistoryImagesTableIfNotExists() {
-  if (hasRun) return;
+export default async function migrateHistoryImagesTable(
+  client: PoolClient,
+  migrateDatetime: Date
+) {
+  if (migrateDatetime.getTime() === migrationDatetimes[0].getTime()) {
+    console.info(
+      "Running migrateHistoryImagesTable for",
+      migrationDatetimes[0]
+    );
 
-  console.info("Running createHistoryImagesTableIfNotExists");
-
-  await createHistoryTableIfNotExists();
-  await createImagesTableIfNotExists();
-
-  await pool.query(
-    "CREATE TABLE IF NOT EXISTS history_images (" +
-      "history_id INTEGER NOT NULL," +
-      "image_id UUID NOT NULL" +
-      ")"
-  );
-
-  hasRun = true;
+    await client.query(
+      "CREATE TABLE IF NOT EXISTS history_images (" +
+        "history_id INTEGER NOT NULL," +
+        "image_id UUID NOT NULL" +
+        ")"
+    );
+  }
 }

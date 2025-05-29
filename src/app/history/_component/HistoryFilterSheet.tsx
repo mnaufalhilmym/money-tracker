@@ -7,23 +7,23 @@ import { FormEvent, useEffect, useState } from "react";
 interface Props {
   isOpen: boolean;
   close: () => void;
-  types: { [key: string]: boolean };
-  setTypes: (types: { [key: string]: boolean }) => void;
+  filter: { types: { [key: string]: boolean } };
+  setFilter: (filter: { types: { [key: string]: boolean } }) => void;
 }
 
 export default function HistoryFilterSheet(props: Readonly<Props>) {
-  const [types, setTypes] = useState(props.types ?? {});
+  const [filter, setFilter] = useState(props.filter ?? {});
 
   useEffect(() => {
     if (props.isOpen) {
-      setTypes(props.types);
+      setFilter(props.filter);
     }
-  }, [props.isOpen]);
+  }, [props.isOpen, props.filter]);
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    props.setTypes(types);
+    props.setFilter(filter);
     props.close();
   }
 
@@ -32,25 +32,30 @@ export default function HistoryFilterSheet(props: Readonly<Props>) {
       <p className="font-bold text-center text-lg">Choose Filter</p>
 
       <form onSubmit={onSubmit} className="mt-2 space-y-4">
-        <div>
-          <p className="font-bold">Type</p>
-          <div className="mt-1 space-y-1">
-            {Object.entries(types).map(([key, value]) => (
-              <CheckboxInput
-                key={key}
-                checked={value}
-                onClick={() =>
-                  setTypes({
-                    ...types,
-                    [key]: !value,
-                  })
-                }
-              >
-                {toTitleCase(key)}
-              </CheckboxInput>
-            ))}
+        {filter.types && (
+          <div>
+            <p className="font-bold">Type</p>
+            <div className="mt-1 space-y-1">
+              {Object.entries(filter.types).map(([key, value]) => (
+                <CheckboxInput
+                  key={key}
+                  checked={value}
+                  onClick={() =>
+                    setFilter((prev) => ({
+                      ...prev,
+                      types: {
+                        ...prev.types,
+                        [key]: !value,
+                      },
+                    }))
+                  }
+                >
+                  {toTitleCase(key)}
+                </CheckboxInput>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <Button type="submit">Filter</Button>
       </form>

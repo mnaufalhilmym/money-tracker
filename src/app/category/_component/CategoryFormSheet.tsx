@@ -107,13 +107,13 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
                   key={name}
                   type="button"
                   onClick={() => setValue((prev) => ({ ...prev, color }))}
-                  className="w-7 h-7 mt-0.5 border rounded-lg cursor-pointer"
+                  className={`w-7 h-7 mt-0.5 border ${
+                    value.color === color
+                      ? "border-white"
+                      : "border-transparent"
+                  } rounded-lg cursor-pointer`}
                   style={{
                     backgroundColor: color,
-                    borderColor:
-                      value.color === color
-                        ? "#fff"
-                        : "color-mix(in srgb, #fff 0%, transparent)",
                   }}
                 />
               ))}

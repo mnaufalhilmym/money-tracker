@@ -1,9 +1,9 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import createWalletsTableIfNotExists from "../../_lib/db/table/wallets";
 import pool from "../../_lib/db/db";
 import { selectWallet } from "../_util/dbSelectWallet";
+import dbMigrate from "../../_lib/db/migrate";
 
 export async function GET(
   request: NextRequest,
@@ -16,7 +16,7 @@ export async function GET(
 
     const { id } = await params;
 
-    await createWalletsTableIfNotExists();
+    await dbMigrate();
 
     const wallet = await selectWallet(id, tokenData.userId);
 
@@ -45,11 +45,13 @@ export async function PUT(
 
     const { name, type_id } = await request.json();
 
-    await createWalletsTableIfNotExists();
+    await dbMigrate();
 
     const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
+
       await client.query(
         "UPDATE wallets SET name = $1, type_id = $2 WHERE deleted_at IS NULL AND id = $3 AND user_id = $4",
         [name, type_id, id, tokenData.userId]
@@ -63,9 +65,12 @@ export async function PUT(
         [id, tokenData.userId]
       );
 
+      await client.query("COMMIT");
+
       return NextResponse.json(wallet.rows[0]);
-    } catch {
-      client.query("ROLLBACK");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
     } finally {
       client.release();
     }
@@ -91,7 +96,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await createWalletsTableIfNotExists();
+    await dbMigrate();
 
     await pool.query(
       "UPDATE wallets SET deleted_at = NOW() WHERE id = $1 AND user_id = $2",

@@ -31,11 +31,11 @@ export default function MapPickerSheet(props: Readonly<Props>) {
     displayName: string;
   }>();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
-    if (props.isOpen && !props.location) {
-      setLocation(undefined);
-    }
-  }, [props.isOpen]);
+    setLocation(props.location);
+  }, [props.isOpen, props.location]);
 
   function pickLocation() {
     if (location) {
@@ -65,11 +65,17 @@ export default function MapPickerSheet(props: Readonly<Props>) {
           isSheetOpen={props.isOpen}
           location={location}
           onPick={setLocation}
+          setIsLoading={setIsLoading}
         />
       </div>
 
       <div className="mt-2">
-        <Button type="button" onClick={pickLocation}>
+        <Button
+          type="button"
+          disable={!location}
+          loading={isLoading}
+          onClick={pickLocation}
+        >
           Pick Location
         </Button>
       </div>

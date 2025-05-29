@@ -1,7 +1,6 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import createHistoryImagesTableIfNotExists from "../_lib/db/table/history_images";
 import pool from "../_lib/db/db";
 import parseFormData from "@/util/api/parseFormData";
 import formidable from "formidable";
@@ -10,6 +9,7 @@ import { insertImagesTx } from "./_util/dbInsertImages";
 import { insertHistoryImagesTx } from "./_util/dbInsertHistoryImages";
 import { selectHistoryTx } from "./_util/dbSelectHistory";
 import { validateCategoryId, validateWalletId } from "./_util/validation";
+import dbMigrate from "../_lib/db/migrate";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -20,12 +20,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const search = searchParams.get("s");
-    const filters = searchParams.getAll("f");
+    const filterTypes = searchParams.getAll("ft");
 
-    await createHistoryImagesTableIfNotExists();
+    await dbMigrate();
 
     let querySql =
-      "SELECT h.id, h.description, t.id type_id, t.name type_name, w.id wallet_id, w.name wallet_name, c.id category_id, c.name category_name, h.datetime, h.amount, ARRAY_AGG(hi.image_id) image_ids, h.location, h.location_name, h.location_display_name" +
+      "SELECT" +
+      " h.id," +
+      " h.description," +
+      " t.id type_id," +
+      " t.name type_name," +
+      " w.id wallet_id," +
+      " w.name wallet_name," +
+      " c.id category_id," +
+      " c.name category_name," +
+      " c.color category_color," +
+      " h.datetime," +
+      " h.amount," +
+      " ARRAY_AGG(hi.image_id) image_ids," +
+      " CASE WHEN h.location IS NOT NULL THEN JSON_BUILD_OBJECT('lat', ST_Y(h.location::geometry), 'lng', ST_X(h.location::geometry)) ELSE NULL END location," +
+      " h.location_name," +
+      " h.location_display_name" +
       " FROM history h" +
       " JOIN wallets w ON w.id = h.wallet_id" +
       " JOIN categories c ON c.id = h.category_id" +
@@ -35,10 +50,15 @@ export async function GET(request: NextRequest) {
     const queryParams: any[] = [tokenData.userId];
     if (search) {
       queryParams.push(`%${search}%`);
-      querySql += ` AND h.description ILIKE $${queryParams.length}`;
+      querySql +=
+        " AND (" +
+        `h.description ILIKE $${queryParams.length}` +
+        ` OR h.location_name ILIKE $${queryParams.length}` +
+        ` OR h.location_display_name ILIKE $${queryParams.length}` +
+        ")";
     }
 
-    queryParams.push(filters);
+    queryParams.push(filterTypes);
     querySql += ` AND t.id = ANY($${queryParams.length})`;
 
     querySql += " GROUP BY h.id, t.id, w.id, c.id";
@@ -76,12 +96,14 @@ export async function POST(request: NextRequest) {
       location_display_name: location_display_names,
     } = fields;
 
-    const description = descriptions?.[0];
-    const wallet_id = wallet_ids?.[0];
-    const category_id = category_ids?.[0];
-    const datetime = datetimes?.[0];
-    const amount = amounts?.[0];
-    const location = locations?.[0];
+    const description = descriptions![0];
+    const wallet_id = wallet_ids![0];
+    const category_id = category_ids![0];
+    const datetime = datetimes![0];
+    const amount = amounts![0];
+    const location = locations?.[0]
+      ? (JSON.parse(locations[0]) as HistoryLocationI)
+      : undefined;
     const location_name = location_names?.[0];
     const location_display_name = location_display_names?.[0];
 
@@ -94,7 +116,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await createHistoryImagesTableIfNotExists();
+    await dbMigrate();
 
     await validateWalletId(tokenData.userId, wallet_id?.[0]);
     await validateCategoryId(tokenData.userId, category_id?.[0]);
@@ -103,6 +125,8 @@ export async function POST(request: NextRequest) {
 
     let savedImages: SavedImage[] = [];
     try {
+      await client.query("BEGIN");
+
       savedImages = await saveImages(uploadedImages, tokenData.userId);
 
       await insertImagesTx(client, savedImages);
@@ -110,7 +134,7 @@ export async function POST(request: NextRequest) {
       const insertQuery = await client.query<{ id: number }>(
         "INSERT INTO history" +
           " (user_id, description, wallet_id, category_id, datetime, amount, location, location_name, location_display_name)" +
-          " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)" +
+          " VALUES ($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($7, $8), 4326), $9, $10)" +
           " RETURNING id",
         [
           tokenData.userId,
@@ -119,7 +143,8 @@ export async function POST(request: NextRequest) {
           category_id,
           datetime,
           amount,
-          location,
+          location?.lng,
+          location?.lat,
           location_name,
           location_display_name,
         ]
@@ -130,13 +155,13 @@ export async function POST(request: NextRequest) {
 
       const history = await selectHistoryTx(client, id, tokenData.userId);
 
-      client.query("COMMIT");
+      await client.query("COMMIT");
 
       return NextResponse.json(history.rows[0]);
     } catch (error) {
-      console.error("Failed to add new history:", error);
-      client.query("ROLLBACK");
+      await client.query("ROLLBACK");
       await deleteImages(savedImages.map((i) => i.path));
+      throw error;
     } finally {
       client.release();
     }

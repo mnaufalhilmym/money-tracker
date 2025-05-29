@@ -131,7 +131,7 @@ export default function Categories() {
             {!!spendingCategories.length && (
               <div>
                 <p className="font-bold text-lg">Spending</p>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-2.5">
                   {spendingCategories.map((c) => (
                     <button
                       key={c.id}
@@ -151,7 +151,7 @@ export default function Categories() {
             {!!savingCategories.length && (
               <div>
                 <p className="font-bold text-lg">Saving</p>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-2.5">
                   {savingCategories.map((c) => (
                     <button
                       key={c.id}

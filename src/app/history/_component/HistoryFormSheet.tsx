@@ -194,7 +194,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
         </div>
 
         <form onSubmit={onSubmit} className="mt-2 space-y-4">
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-stretch gap-x-2">
             <Button type="button" onClick={() => setIsShowTypePicker(true)}>
               <div className="flex items-center justify-center gap-x-1">
                 <span>{value.type_name && toTitleCase(value.type_name)}</span>

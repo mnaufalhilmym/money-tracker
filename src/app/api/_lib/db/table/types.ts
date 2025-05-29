@@ -1,25 +1,26 @@
-import pool from "../db";
+import { PoolClient } from "pg";
 
-let hasRun = false;
+const migrationDatetimes = [new Date("2025-05-29T08:20:00+07:00")];
 
-export default async function createTypesTableIfNotExists() {
-  if (hasRun) return;
+export default async function migrateTypesTable(
+  client: PoolClient,
+  migrateDatetime: Date
+) {
+  if (migrateDatetime.getTime() === migrationDatetimes[0].getTime()) {
+    console.info("Running migrateTypesTable for", migrationDatetimes[0]);
 
-  console.info("Running createTypesTableIfNotExists");
+    await client.query(
+      "CREATE TABLE IF NOT EXISTS types (" +
+        "id SERIAL PRIMARY KEY," +
+        "name TEXT NOT NULL" +
+        ")"
+    );
 
-  await pool.query(
-    "CREATE TABLE IF NOT EXISTS types (" +
-      "id SERIAL PRIMARY KEY," +
-      "name TEXT NOT NULL" +
-      ")"
-  );
-
-  await pool.query(
-    "INSERT INTO types (id, name) VALUES" +
-      " (1, 'SPENDING')," +
-      " (2, 'SAVING')" +
-      " ON CONFLICT (id) DO NOTHING"
-  );
-
-  hasRun = true;
+    await client.query(
+      "INSERT INTO types (id, name) VALUES" +
+        " (1, 'SPENDING')," +
+        " (2, 'SAVING')" +
+        " ON CONFLICT (id) DO NOTHING"
+    );
+  }
 }
