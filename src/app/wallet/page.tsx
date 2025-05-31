@@ -5,7 +5,7 @@ import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
 import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import WalletFormSheet from "./_component/WalletFormSheet";
 import WalletFilterSheet from "./_component/WalletFilterSheet";
 import Loading from "@/component/loading/Loading";
@@ -14,8 +14,14 @@ import useDebounce from "@/hook/useDebounce";
 import getTypes from "@/util/fetchData/getTypes";
 import apiGetWallets from "@/util/fetchData/getWallets";
 
-async function getWallets(params?: { search?: string; filter?: number[] }) {
-  const queryParams: { key: string; value: string | number }[] = [];
+async function getWallets(
+  abortSignal: AbortSignal,
+  params?: { search?: string; filter?: number[]; page?: number }
+) {
+  const queryParams: { key: string; value: string | number }[] = [
+    { key: "l", value: 20 },
+    { key: "p", value: params?.page && params.page > 1 ? params.page : 1 },
+  ];
   if (params?.search) {
     queryParams.push({ key: "s", value: params.search });
   }
@@ -25,17 +31,24 @@ async function getWallets(params?: { search?: string; filter?: number[] }) {
     });
   }
 
-  const data = await apiGetWallets(queryParams);
+  const data = await apiGetWallets(queryParams, abortSignal);
 
   return data;
 }
 
 export default function Wallets() {
+  const walletsFetchAbortController = useRef<AbortController>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const [isInitialize, setIsInitialize] = useState(true);
+
   const [types, setTypes] = useState<TypeI[]>([]);
   const [wallets, setWallets] = useState<{
     data: WalletI[];
     isLoading: boolean;
-  }>({ data: [], isLoading: true });
+    page: number;
+    canLoadMore: boolean;
+  }>({ data: [], isLoading: true, page: 0, canLoadMore: true });
 
   const [isOpenAddSheet, setIsOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
@@ -45,14 +58,6 @@ export default function Wallets() {
   const [search, setSearch] = useState("");
   const debounceSearch = useDebounce(search, 500);
 
-  useEffect(() => {
-    resetTypes();
-  }, []);
-
-  useEffect(() => {
-    refreshWallets();
-  }, [debounceSearch, typeFilter]);
-
   const spendingWallets = useMemo(() => {
     return wallets.data.filter((w) => w.type_id === 1);
   }, [wallets.data]);
@@ -61,7 +66,35 @@ export default function Wallets() {
     return wallets.data.filter((w) => w.type_id === 2);
   }, [wallets.data]);
 
+  useEffect(() => {
+    resetTypes();
+  }, []);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !isInitialize && wallets.canLoadMore) {
+        fetchWallets();
+      }
+    });
+
+    intersectionObserver.observe(loadMoreRef.current);
+
+    return () => {
+      intersectionObserver.disconnect();
+    };
+  }, [loadMoreRef.current, wallets.data]);
+
+  useEffect(() => {
+    if (isInitialize) return;
+
+    fetchWallets(true);
+  }, [isInitialize, debounceSearch, typeFilter]);
+
   async function resetTypes() {
+    setIsInitialize(true);
+
     const typesData = await getTypes();
     setTypes(typesData);
 
@@ -70,11 +103,23 @@ export default function Wallets() {
       types[t.name!] = true;
     }
     setTypeFilter(types);
+
+    setIsInitialize(false);
   }
 
-  async function refreshWallets() {
-    const debounceSearchTrim = debounceSearch.trim();
-    const search = debounceSearchTrim || undefined;
+  async function fetchWallets(reset?: boolean) {
+    walletsFetchAbortController.current?.abort("New fetchWallets request");
+    walletsFetchAbortController.current = new AbortController();
+
+    let walletsPage = 1;
+    if (reset) {
+      setWallets({ data: [], isLoading: true, page: 0, canLoadMore: true });
+    } else {
+      walletsPage = wallets.page + 1;
+      setWallets((prev) => ({ ...prev, isLoading: true }));
+    }
+
+    const search = debounceSearch.trim() || undefined;
 
     const filter: number[] = [];
     for (const [key, value] of Object.entries(typeFilter)) {
@@ -84,9 +129,20 @@ export default function Wallets() {
       filter.push(id);
     }
 
-    setWallets((prev) => ({ ...prev, isLoading: true }));
-    const data = await getWallets({ search, filter });
-    setWallets({ data, isLoading: false });
+    try {
+      const wallets = await getWallets(
+        walletsFetchAbortController.current.signal,
+        { search, filter, page: walletsPage }
+      );
+      setWallets((prev) => ({
+        data: [...prev.data, ...wallets.data],
+        isLoading: false,
+        page: walletsPage,
+        canLoadMore: wallets.total > prev.data.length + wallets.data.length,
+      }));
+    } catch (error) {
+      console.error("Error fetchWallets", error);
+    }
   }
 
   return (
@@ -167,6 +223,8 @@ export default function Wallets() {
         ) : (
           <Loading />
         )}
+
+        <div ref={loadMoreRef} />
       </div>
 
       <WalletFormSheet
@@ -176,7 +234,7 @@ export default function Wallets() {
           if (editWallet) setEditWallet(undefined);
         }}
         wallet={editWallet}
-        refreshWallets={refreshWallets}
+        refreshWallets={() => fetchWallets(true)}
       />
 
       <WalletFilterSheet

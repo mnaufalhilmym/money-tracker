@@ -58,6 +58,11 @@ export async function GET(request: NextRequest) {
       querySql += " GROUP BY w.id, t.id";
     }
 
+    const queryTotalParams = [...queryParams];
+    const queryTotalSql = `SELECT COUNT(1) total FROM (${querySql})`;
+
+    querySql += " ORDER BY w.name ASC";
+
     if (!(!isNaN(limit) && limit > 0)) {
       limit = 30;
     }
@@ -70,9 +75,15 @@ export async function GET(request: NextRequest) {
     queryParams.push((page - 1) * limit);
     querySql += ` OFFSET $${queryParams.length}`;
 
-    const wallets = await pool.query<WalletI>(querySql, queryParams);
+    const [wallets, total] = await Promise.all([
+      pool.query<WalletI>(querySql, queryParams),
+      pool.query<{ total: number }>(queryTotalSql, queryTotalParams),
+    ]);
 
-    return NextResponse.json(wallets.rows);
+    return NextResponse.json<ApiResponse<WalletI[]>>({
+      data: wallets.rows,
+      total: total.rows[0].total,
+    });
   } catch (error) {
     console.error("Failed to get many wallets:", error);
     return NextResponse.json(

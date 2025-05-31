@@ -12,6 +12,6 @@ export default async function getHistory(
     filterQueryParams,
     { signal: abortSignal }
   );
-  const history: HistoryI[] = await respHistory.json();
+  const history: ApiResponse<HistoryI[]> = await respHistory.json();
   return history;
 }

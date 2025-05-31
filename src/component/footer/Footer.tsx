@@ -11,9 +11,7 @@ export default function Footer() {
           Hilmy
         </a>
       </p>
-      <p>
-        Your data is stored anonymously — we have no way of identifying you.
-      </p>
+      <p>Your data is stored anonymously — we have no way of identifying you</p>
       <a href="https://l.hilmy.dev/sc_money_tracker" className="underline">
         Source code available here
       </a>

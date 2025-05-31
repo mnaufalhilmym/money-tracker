@@ -81,6 +81,10 @@ export async function GET(request: NextRequest) {
     querySql += ` AND c.id = ANY($${queryParams.length})`;
 
     querySql += " GROUP BY h.id, t.id, w.id, c.id";
+
+    const queryTotalParams = [...queryParams];
+    const queryTotalSql = `SELECT COUNT(1) total FROM (${querySql})`;
+
     querySql += " ORDER BY h.datetime DESC";
 
     if (!(!isNaN(limit) && limit > 0)) {
@@ -95,9 +99,15 @@ export async function GET(request: NextRequest) {
     queryParams.push((page - 1) * limit);
     querySql += ` OFFSET $${queryParams.length}`;
 
-    const history = await pool.query<HistoryI>(querySql, queryParams);
+    const [history, total] = await Promise.all([
+      pool.query<HistoryI>(querySql, queryParams),
+      pool.query<{ total: number }>(queryTotalSql, queryTotalParams),
+    ]);
 
-    return NextResponse.json(history.rows);
+    return NextResponse.json<ApiResponse<HistoryI[]>>({
+      data: history.rows,
+      total: total.rows[0].total,
+    });
   } catch (error) {
     console.error("Failed to get many history:", error);
     return NextResponse.json(

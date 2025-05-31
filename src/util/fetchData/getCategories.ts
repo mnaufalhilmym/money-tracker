@@ -12,6 +12,6 @@ export default async function getCategories(
     filterQueryParams,
     { signal: abortSignal }
   );
-  const categories: CategoryI[] = await respCategories.json();
+  const categories: ApiResponse<CategoryI[]> = await respCategories.json();
   return categories;
 }

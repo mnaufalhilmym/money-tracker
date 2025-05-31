@@ -5,7 +5,7 @@ import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
 import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import HistoryFilterSheet from "./_component/HistoryFilterSheet";
 import HistoryFormSheet from "./_component/HistoryFormSheet";
 import useDebounce from "@/hook/useDebounce";
@@ -16,13 +16,21 @@ import getWallets from "@/util/fetchData/getWallets";
 import getCategories from "@/util/fetchData/getCategories";
 import apiGetHistory from "@/util/fetchData/getHistory";
 
-async function getHistory(params?: {
-  search?: string;
-  filterTypes?: number[];
-  filterWallets?: number[];
-  filterCategories?: number[];
-}) {
-  const queryParams: { key: string; value: string | number }[] = [];
+async function getHistory(
+  abortSignal: AbortSignal,
+  params?: {
+    search?: string;
+    filterTypes?: number[];
+    filterWallets?: number[];
+    filterCategories?: number[];
+    page?: number;
+  }
+) {
+  const queryParams: { key: string; value: string | number }[] = [
+    { key: "l", value: 20 },
+    { key: "p", value: params?.page && params.page > 1 ? params.page : 1 },
+  ];
+
   if (params?.search) {
     queryParams.push({ key: "s", value: params.search });
   }
@@ -45,12 +53,15 @@ async function getHistory(params?: {
     });
   }
 
-  const data = await apiGetHistory(queryParams);
+  const data = await apiGetHistory(queryParams, abortSignal);
 
   return data;
 }
 
 export default function History() {
+  const historyFetchAbortController = useRef<AbortController>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   const [isInitialize, setIsInitialize] = useState(true);
 
   const [types, setTypes] = useState<TypeI[]>([]);
@@ -59,7 +70,9 @@ export default function History() {
   const [history, setHistory] = useState<{
     data: HistoryI[];
     isLoading: boolean;
-  }>({ data: [], isLoading: true });
+    page: number;
+    canLoadMore: boolean;
+  }>({ data: [], isLoading: true, page: 0, canLoadMore: true });
 
   const [isOpenAddSheet, setisOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
@@ -76,15 +89,6 @@ export default function History() {
 
   const [search, setSearch] = useState("");
   const debounceSearch = useDebounce(search, 500);
-
-  useEffect(() => {
-    resetTypesCategoriesWallets();
-  }, []);
-
-  useEffect(() => {
-    if (isInitialize) return;
-    refreshHistory();
-  }, [isInitialize, debounceSearch, filter]);
 
   const groupedHistories = useMemo(() => {
     const grouped = new Map<string, (HistoryI & { idx: number })[]>();
@@ -117,7 +121,34 @@ export default function History() {
   }, [history.data]);
 
   useEffect(() => {
+    resetTypesCategoriesWallets();
+  }, []);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !isInitialize && history.canLoadMore) {
+        fetchHistory();
+      }
+    });
+
+    intersectionObserver.observe(loadMoreRef.current);
+
+    return () => {
+      intersectionObserver.disconnect();
+    };
+  }, [loadMoreRef.current, groupedHistories]);
+
+  useEffect(() => {
     if (isInitialize) return;
+
+    fetchHistory(true);
+  }, [isInitialize, debounceSearch, filter]);
+
+  useEffect(() => {
+    if (isInitialize) return;
+
     setHistory((prev) => ({ ...prev, isLoading: false }));
   }, [groupedHistories]);
 
@@ -142,16 +173,16 @@ export default function History() {
       getCategories(filterQueryParams),
     ]);
 
-    setWallets(wallets);
-    setCategories(categories);
+    setWallets(wallets.data);
+    setCategories(categories.data);
 
     const filterWallets: { [key: string]: boolean } = {};
-    for (const w of wallets) {
+    for (const w of wallets.data) {
       filterWallets[w.name!] = true;
     }
 
     const filterCategories: { [key: string]: boolean } = {};
-    for (const c of categories) {
+    for (const c of categories.data) {
       filterCategories[c.name!] = true;
     }
 
@@ -165,9 +196,19 @@ export default function History() {
     setIsInitialize(false);
   }
 
-  async function refreshHistory() {
-    const debounceSearchTrim = debounceSearch.trim();
-    const search = debounceSearchTrim || undefined;
+  async function fetchHistory(reset?: boolean) {
+    historyFetchAbortController.current?.abort("New fetchHistory request");
+    historyFetchAbortController.current = new AbortController();
+
+    let historyPage = 1;
+    if (reset) {
+      setHistory({ data: [], isLoading: true, page: 0, canLoadMore: true });
+    } else {
+      historyPage = history.page + 1;
+      setHistory((prev) => ({ ...prev, isLoading: true }));
+    }
+
+    const search = debounceSearch.trim() || undefined;
 
     const filterTypes: number[] = [];
     for (const [key, value] of Object.entries(filter.types)) {
@@ -193,14 +234,26 @@ export default function History() {
       filterCategories.push(id);
     }
 
-    setHistory((prev) => ({ ...prev, isLoading: true }));
-    const data = await getHistory({
-      search,
-      filterTypes,
-      filterWallets,
-      filterCategories,
-    });
-    setHistory((prev) => ({ ...prev, data }));
+    try {
+      const history = await getHistory(
+        historyFetchAbortController.current.signal,
+        {
+          search,
+          filterTypes,
+          filterWallets,
+          filterCategories,
+          page: historyPage,
+        }
+      );
+      setHistory((prev) => ({
+        ...prev,
+        data: [...prev.data, ...history.data],
+        page: historyPage,
+        canLoadMore: history.total > prev.data.length + history.data.length,
+      }));
+    } catch (error) {
+      console.error("Error fetchHistory", error);
+    }
   }
 
   return (
@@ -294,6 +347,8 @@ export default function History() {
         ) : (
           <Loading />
         )}
+
+        <div ref={loadMoreRef} />
       </div>
 
       <HistoryFormSheet
@@ -306,7 +361,7 @@ export default function History() {
         types={types}
         categories={categories}
         wallets={wallets}
-        refreshHistory={refreshHistory}
+        refreshHistory={() => fetchHistory(true)}
       />
 
       <HistoryFilterSheet

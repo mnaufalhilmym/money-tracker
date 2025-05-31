@@ -59,6 +59,11 @@ export async function GET(request: NextRequest) {
       querySql += " GROUP BY c.id, t.id";
     }
 
+    const queryTotalParams = [...queryParams];
+    const queryTotalSql = `SELECT COUNT(1) total FROM (${querySql})`;
+
+    querySql += " ORDER BY c.name ASC";
+
     if (!(!isNaN(limit) && limit > 0)) {
       limit = 30;
     }
@@ -71,9 +76,15 @@ export async function GET(request: NextRequest) {
     queryParams.push((page - 1) * limit);
     querySql += ` OFFSET $${queryParams.length}`;
 
-    const categories = await pool.query<CategoryI>(querySql, queryParams);
+    const [categories, total] = await Promise.all([
+      pool.query<CategoryI>(querySql, queryParams),
+      pool.query<{ total: number }>(queryTotalSql, queryTotalParams),
+    ]);
 
-    return NextResponse.json(categories.rows);
+    return NextResponse.json<ApiResponse<CategoryI[]>>({
+      data: categories.rows,
+      total: total.rows[0].total,
+    });
   } catch (error) {
     console.error("Failed to get many categories:", error);
     return NextResponse.json(

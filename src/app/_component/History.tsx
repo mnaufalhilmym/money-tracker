@@ -2,18 +2,22 @@ import Button from "@/component/button/Button";
 import OpenIcon from "@/component/icon/OpenIcon";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
+import toTitleCase from "@/util/titleCase";
 import Link from "next/link";
 
 interface Props {
+  typeName: string;
   isLoading?: boolean;
+  canLoadMore?: boolean;
   data: HistoryI[];
+  getHistory: (abortSignal: AbortSignal, page?: number) => Promise<void>;
 }
 
 export default function History(props: Readonly<Props>) {
   return (
     <>
       <div className="flex items-center justify-between font-bold">
-        <p className="text-lg">Spending History</p>
+        <p className="text-lg">{toTitleCase(props.typeName)} History</p>
         <Link href="/history" className="text-xl">
           <OpenIcon />
         </Link>
@@ -61,7 +65,7 @@ export default function History(props: Readonly<Props>) {
         </div>
       )}
 
-      {!props.isLoading && !!props.data.length && (
+      {!props.isLoading && !!props.data.length && props.canLoadMore && (
         <div className="mt-3">
           <Button type="button">See more</Button>
         </div>

@@ -5,7 +5,7 @@ import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
 import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CategoryFormSheet from "./_component/CategoryFormSheet";
 import CategoryFilterSheet from "./_component/CategoryFilterSheet";
 import useDebounce from "@/hook/useDebounce";
@@ -14,8 +14,14 @@ import NotFound from "@/component/notFound/NotFound";
 import getTypes from "@/util/fetchData/getTypes";
 import apiGetCategories from "@/util/fetchData/getCategories";
 
-async function getCategories(params?: { search?: string; filter?: number[] }) {
-  const queryParams: { key: string; value: string | number }[] = [];
+async function getCategories(
+  abortSignal: AbortSignal,
+  params?: { search?: string; filter?: number[]; page?: number }
+) {
+  const queryParams: { key: string; value: string | number }[] = [
+    { key: "l", value: 20 },
+    { key: "p", value: params?.page && params.page > 1 ? params.page : 1 },
+  ];
   if (params?.search) {
     queryParams.push({ key: "s", value: params.search });
   }
@@ -25,17 +31,24 @@ async function getCategories(params?: { search?: string; filter?: number[] }) {
     });
   }
 
-  const data = await apiGetCategories(queryParams);
+  const data = await apiGetCategories(queryParams, abortSignal);
 
   return data;
 }
 
 export default function Categories() {
+  const categoriesFetchAbortController = useRef<AbortController>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const [isInitialize, setIsInitialize] = useState(true);
+
   const [types, setTypes] = useState<TypeI[]>([]);
   const [categories, setCategories] = useState<{
     data: CategoryI[];
     isLoading: boolean;
-  }>({ data: [], isLoading: true });
+    page: number;
+    canLoadMore: boolean;
+  }>({ data: [], isLoading: true, page: 0, canLoadMore: true });
 
   const [isOpenAddSheet, setIsOpenAddSheet] = useState(false);
   const [isOpenFilterSheet, setIsOpenFilterSheet] = useState(false);
@@ -45,22 +58,47 @@ export default function Categories() {
   const [search, setSearch] = useState("");
   const debounceSearch = useDebounce(search, 500);
 
+  const spendingCategories = useMemo(() => {
+    return categories.data.filter((c) => c.type_id === 1);
+  }, [categories.data]);
+
+  const savingCategories = useMemo(() => {
+    return categories.data.filter((c) => c.type_id === 2);
+  }, [categories.data]);
+
   useEffect(() => {
     resetTypes();
   }, []);
 
   useEffect(() => {
-    refreshCategories();
-  }, [debounceSearch, typeFilter]);
+    if (!loadMoreRef.current) return;
 
-  const spendingCategories = useMemo(() => {
-    return categories.data.filter((c) => c.type_id === 1);
-  }, [categories.data]);
-  const savingCategories = useMemo(() => {
-    return categories.data.filter((c) => c.type_id === 2);
-  }, [categories.data]);
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      if (
+        entries[0].isIntersecting &&
+        !isInitialize &&
+        categories.canLoadMore
+      ) {
+        fetchCategories();
+      }
+    });
+
+    intersectionObserver.observe(loadMoreRef.current);
+
+    return () => {
+      intersectionObserver.disconnect();
+    };
+  }, [loadMoreRef.current, categories.data]);
+
+  useEffect(() => {
+    if (isInitialize) return;
+
+    fetchCategories(true);
+  }, [isInitialize, debounceSearch, typeFilter]);
 
   async function resetTypes() {
+    setIsInitialize(true);
+
     const typesData = await getTypes();
     setTypes(typesData);
 
@@ -69,11 +107,25 @@ export default function Categories() {
       types[t.name!] = true;
     }
     setTypeFilter(types);
+
+    setIsInitialize(false);
   }
 
-  async function refreshCategories() {
-    const debounceSearchTrim = debounceSearch.trim();
-    const search = debounceSearchTrim || undefined;
+  async function fetchCategories(reset?: boolean) {
+    categoriesFetchAbortController.current?.abort(
+      "New fetchCategories request"
+    );
+    categoriesFetchAbortController.current = new AbortController();
+
+    let categoriesPage = 1;
+    if (reset) {
+      setCategories({ data: [], isLoading: true, page: 0, canLoadMore: true });
+    } else {
+      categoriesPage = categories.page + 1;
+      setCategories((prev) => ({ ...prev, isLoading: true }));
+    }
+
+    const search = debounceSearch.trim() || undefined;
 
     const filter: number[] = [];
     for (const [key, value] of Object.entries(typeFilter)) {
@@ -83,9 +135,21 @@ export default function Categories() {
       filter.push(id);
     }
 
-    setCategories((prev) => ({ ...prev, isLoading: true }));
-    const data = await getCategories({ search, filter });
-    setCategories({ data, isLoading: false });
+    try {
+      const categories = await getCategories(
+        categoriesFetchAbortController.current.signal,
+        { search, filter, page: categoriesPage }
+      );
+      setCategories((prev) => ({
+        data: [...prev.data, ...categories.data],
+        isLoading: false,
+        page: categoriesPage,
+        canLoadMore:
+          categories.total > prev.data.length + categories.data.length,
+      }));
+    } catch (error) {
+      console.error("Error fetchCategories", error);
+    }
   }
 
   return (
@@ -176,6 +240,8 @@ export default function Categories() {
         ) : (
           <Loading />
         )}
+
+        <div ref={loadMoreRef} />
       </div>
 
       <CategoryFormSheet
@@ -185,7 +251,7 @@ export default function Categories() {
           if (editCategory) setEditCategory(undefined);
         }}
         category={editCategory}
-        refreshCategories={refreshCategories}
+        refreshCategories={() => fetchCategories(true)}
       />
 
       <CategoryFilterSheet

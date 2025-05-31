@@ -14,6 +14,6 @@ export default async function getWallets(
       signal: abortSignal,
     }
   );
-  const wallets: WalletI[] = await respWallets.json();
+  const wallets: ApiResponse<WalletI[]> = await respWallets.json();
   return wallets;
 }
