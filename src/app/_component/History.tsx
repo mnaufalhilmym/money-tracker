@@ -1,8 +1,15 @@
 import Button from "@/component/button/Button";
 import OpenIcon from "@/component/icon/OpenIcon";
+import Loading from "@/component/loading/Loading";
+import NotFound from "@/component/notFound/NotFound";
 import Link from "next/link";
 
-export default function History() {
+interface Props {
+  isLoading?: boolean;
+  data: HistoryI[];
+}
+
+export default function History(props: Readonly<Props>) {
   return (
     <>
       <div className="flex items-center justify-between font-bold">
@@ -11,59 +18,54 @@ export default function History() {
           <OpenIcon />
         </Link>
       </div>
-      <div className="mt-2 space-y-2.5">
-        <div className="flex items-center gap-x-2 justify-between">
-          <div className="flex items-center gap-x-2">
-            <div className="w-8 h-8 bg-red-500 rounded-full" />
-            <div>
-              <p className="font-bold">Spotify</p>
-              <p className="text-xs text-white/70">Apr 02, 2024, 02:33 pm</p>
+
+      {!props.isLoading && !!props.data.length && (
+        <div className="mt-2 space-y-2.5">
+          {props.data.map((d) => (
+            <div
+              key={`history_${d.id}`}
+              className="flex items-center gap-x-2 justify-between"
+            >
+              <div className="flex items-center gap-x-2">
+                <div
+                  className="w-8 h-8 rounded-full"
+                  style={{ backgroundColor: d.category_color }}
+                />
+                <div>
+                  <p className="font-bold">{d.description}</p>
+                  <p className="text-xs text-white/70">
+                    {new Date(d.datetime!).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="font-bold">
+                  {d.type_amount_prefix}
+                  {d.amount}
+                </p>
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="font-bold">-100.000</p>
-          </div>
+          ))}
         </div>
-        <div className="flex items-center gap-x-2 justify-between">
-          <div className="flex items-center gap-x-2">
-            <div className="w-8 h-8 bg-green-500 rounded-full" />
-            <div>
-              <p className="font-bold">Paypal</p>
-              <p className="text-xs text-white/70">Mar 22, 2024, 01:33 pm</p>
-            </div>
-          </div>
-          <div>
-            <p className="font-bold">-59.000</p>
-          </div>
+      )}
+
+      {!props.isLoading && !props.data.length && (
+        <div className="mt-4">
+          <NotFound />
         </div>
-        <div className="flex items-center gap-x-2 justify-between">
-          <div className="flex items-center gap-x-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full" />
-            <div>
-              <p className="font-bold">Stripe</p>
-              <p className="text-xs text-white/70">Mar 22, 2024, 01:33 pm</p>
-            </div>
-          </div>
-          <div>
-            <p className="font-bold">-59.000</p>
-          </div>
+      )}
+
+      {props.isLoading && (
+        <div className="mt-4">
+          <Loading />
         </div>
-        <div className="flex items-center gap-x-2 justify-between">
-          <div className="flex items-center gap-x-2">
-            <div className="w-8 h-8 bg-yellow-500 rounded-full" />
-            <div>
-              <p className="font-bold">Wise</p>
-              <p className="text-xs text-white/70">Mar 22, 2024, 01:33 pm</p>
-            </div>
-          </div>
-          <div>
-            <p className="font-bold">-59.000</p>
-          </div>
+      )}
+
+      {!props.isLoading && !!props.data.length && (
+        <div className="mt-3">
+          <Button type="button">See more</Button>
         </div>
-      </div>
-      <div className="mt-3">
-        <Button type="button">See more</Button>
-      </div>
+      )}
     </>
   );
 }

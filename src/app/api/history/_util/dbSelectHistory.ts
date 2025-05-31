@@ -6,7 +6,22 @@ export async function selectHistoryTx(
   userId: string
 ) {
   return await client.query<HistoryI>(
-    "SELECT h.id, h.description, t.id type_id, t.name type_name, w.id wallet_id, w.name wallet_name, c.id category_id, c.name category_name, h.datetime, h.amount, ARRAY_AGG(hi.image_id) image_ids, h.location, h.location_name, h.location_display_name" +
+    "SELECT" +
+      " h.id," +
+      " h.description," +
+      " t.id type_id," +
+      " t.name type_name," +
+      " t.amount_prefix type_amount_prefix," +
+      " w.id wallet_id," +
+      " w.name wallet_name," +
+      " c.id category_id," +
+      " c.name category_name," +
+      " h.datetime," +
+      " h.amount," +
+      " ARRAY_AGG(hi.image_id) image_ids," +
+      " h.location," +
+      " h.location_name," +
+      " h.location_display_name" +
       " FROM history h" +
       " JOIN wallets w ON w.id = h.wallet_id" +
       " JOIN categories c ON c.id = h.category_id" +

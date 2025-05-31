@@ -9,12 +9,12 @@ import { useEffect, useMemo, useState } from "react";
 import HistoryFilterSheet from "./_component/HistoryFilterSheet";
 import HistoryFormSheet from "./_component/HistoryFormSheet";
 import useDebounce from "@/hook/useDebounce";
-import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import NotFound from "@/component/notFound/NotFound";
 import Loading from "@/component/loading/Loading";
 import getTypes from "@/util/fetchData/getTypes";
 import getWallets from "@/util/fetchData/getWallets";
 import getCategories from "@/util/fetchData/getCategories";
+import apiGetHistory from "@/util/fetchData/getHistory";
 
 async function getHistory(params?: {
   search?: string;
@@ -45,9 +45,7 @@ async function getHistory(params?: {
     });
   }
 
-  const response = await clientInternalApiCall("/api/history", queryParams);
-
-  const data: HistoryI[] = await response.json();
+  const data = await apiGetHistory(queryParams);
 
   return data;
 }
@@ -136,7 +134,7 @@ export default function History() {
 
     const filterQueryParams: { key: string; value: number }[] = [];
     typeData.forEach((t) => {
-      filterQueryParams.push({ key: "f", value: t.id! });
+      filterQueryParams.push({ key: "ft", value: t.id! });
     });
 
     const [wallets, categories] = await Promise.all([
@@ -268,7 +266,10 @@ export default function History() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold">{i.amount}</p>
+                            <p className="font-bold">
+                              {i.type_amount_prefix}
+                              {i.amount}
+                            </p>
                             <p className="text-xs text-white/70">
                               {i.wallet_name} - {i.category_name}
                             </p>
@@ -287,6 +288,7 @@ export default function History() {
                 </div>
               </div>
             ))}
+
             {!groupedHistories.size && <NotFound />}
           </>
         ) : (

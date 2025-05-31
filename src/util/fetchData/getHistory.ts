@@ -1,17 +1,17 @@
 import { clientInternalApiCall } from "../fetch/fromClient";
 
-export default async function getCategories(
+export default async function getHistory(
   filterQueryParams: {
     key: string;
     value: string | number;
   }[],
   abortSignal?: AbortSignal
 ) {
-  const respCategories = await clientInternalApiCall(
-    "/api/category",
+  const respHistory = await clientInternalApiCall(
+    "/api/history",
     filterQueryParams,
     { signal: abortSignal }
   );
-  const categories: CategoryI[] = await respCategories.json();
-  return categories;
+  const history: HistoryI[] = await respHistory.json();
+  return history;
 }

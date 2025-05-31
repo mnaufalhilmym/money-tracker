@@ -39,21 +39,24 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
     e.preventDefault();
 
     setIsLoadingSubmit(true);
-
-    if (!props.category) {
-      await clientInternalApiCall("/api/category", undefined, {
-        method: "POST",
-        body: JSON.stringify(value),
-      });
-    } else {
-      await clientInternalApiCall(
-        "/api/category/" + props.category.id,
-        undefined,
-        {
-          method: "PUT",
+    try {
+      if (!props.category) {
+        await clientInternalApiCall("/api/category", undefined, {
+          method: "POST",
           body: JSON.stringify(value),
-        }
-      );
+        });
+      } else {
+        await clientInternalApiCall(
+          "/api/category/" + props.category.id,
+          undefined,
+          {
+            method: "PUT",
+            body: JSON.stringify(value),
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Error onSubmit CategoryForm", error);
     }
 
     props.close();

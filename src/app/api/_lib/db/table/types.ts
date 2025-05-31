@@ -12,14 +12,15 @@ export default async function migrateTypesTable(
     await client.query(
       "CREATE TABLE IF NOT EXISTS types (" +
         "id SERIAL PRIMARY KEY," +
-        "name TEXT NOT NULL" +
+        "name TEXT NOT NULL," +
+        "amount_prefix TEXT NOT NULL" +
         ")"
     );
 
     await client.query(
-      "INSERT INTO types (id, name) VALUES" +
-        " (1, 'SPENDING')," +
-        " (2, 'SAVING')" +
+      "INSERT INTO types (id, name, amount_prefix) VALUES" +
+        " (1, 'SPENDING', '-')," +
+        " (2, 'SAVING', '+')" +
         " ON CONFLICT (id) DO NOTHING"
     );
   }

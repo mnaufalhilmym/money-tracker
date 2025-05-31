@@ -1,6 +1,5 @@
 "use client";
 
-import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
 import HomeHeader from "./_component/HomeHeader";
 import History from "./_component/History";
 import Categories from "./_component/Categories";
@@ -13,6 +12,9 @@ import WalletPicker from "./_component/WalletPicker";
 import getWallets from "@/util/fetchData/getWallets";
 import getCategories from "@/util/fetchData/getCategories";
 import CategoryPicker from "./_component/CategoryPicker";
+import getHistory from "@/util/fetchData/getHistory";
+import Amount from "./_component/Amount";
+import Graph from "./_component/Graph";
 
 interface HomeDataI<T> {
   isLoading: boolean;
@@ -36,38 +38,87 @@ export default function Home() {
   const [wallet, setWallet] = useState<HomeDataI<WalletI>>(initialHomeData);
   const [category, setCategory] =
     useState<HomeDataI<CategoryI>>(initialHomeData);
+  const [history, setHistory] = useState<HomeDataI<HistoryI>>(initialHomeData);
 
   useEffect(() => {
-    refreshData();
+    const abortController = new AbortController();
+
+    refreshData(abortController.signal);
+
+    return () => {
+      abortController.abort("New refresh data request");
+    };
   }, []);
 
-  async function refreshData() {
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    refreshDataTransaction(abortController.signal);
+
+    return () => {
+      abortController.abort("New refresh data transaction request");
+    };
+  }, [type]);
+
+  async function refreshData(abortSignal: AbortSignal) {
     setAuthData({ isLoading: true });
     setType({ isLoading: true, data: [] });
 
-    const [authData, types] = await Promise.all([getAuthData(), getTypes()]);
+    try {
+      const [authData, types] = await Promise.all([
+        getAuthData(abortSignal),
+        getTypes(abortSignal),
+      ]);
 
-    setAuthData({ data: authData, isLoading: false });
-    setType({
-      data: types,
-      active: types?.[0]
+      const activeType = types?.[0]
         ? { id: types[0].id!, name: types[0].name! }
-        : undefined,
-      isLoading: false,
-    });
+        : undefined;
 
-    const filterQueryParams: { key: string; value: number }[] = [];
-    types.forEach((t) => {
-      filterQueryParams.push({ key: "f", value: t.id! });
-    });
+      setAuthData({ data: authData, isLoading: false });
+      setType({
+        data: types,
+        active: activeType,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Error refreshData", error);
+    }
+  }
 
-    const [wallets, categories] = await Promise.all([
-      getWallets(filterQueryParams),
-      getCategories(filterQueryParams),
-    ]);
+  async function refreshDataTransaction(abortSignal: AbortSignal) {
+    setWallet({ isLoading: true, data: [] });
+    setCategory({ isLoading: true, data: [] });
+    setHistory({ isLoading: true, data: [] });
 
-    setWallet({ data: wallets, isLoading: false });
-    setCategory({ data: categories, isLoading: false });
+    const filterQueryParams: { key: string; value: number }[] = [
+      { key: "a", value: 1 },
+    ];
+
+    if (type.active) {
+      filterQueryParams.push({ key: "ft", value: type.active.id });
+    }
+
+    try {
+      const [wallets, categories] = await Promise.all([
+        getWallets(filterQueryParams, abortSignal),
+        getCategories(filterQueryParams, abortSignal),
+      ]);
+
+      setWallet({ data: wallets, isLoading: false });
+      setCategory({ data: categories, isLoading: false });
+
+      wallets.forEach((w) => {
+        filterQueryParams.push({ key: "fw", value: w.id! });
+      });
+      categories.forEach((c) => {
+        filterQueryParams.push({ key: "fc", value: c.id! });
+      });
+
+      const history = await getHistory(filterQueryParams, abortSignal);
+      setHistory({ data: history, isLoading: false });
+    } catch (error) {
+      console.error("Error refreshDataTransaction", error);
+    }
   }
 
   return (
@@ -99,66 +150,24 @@ export default function Home() {
         />
       </div>
 
-      <div className="flex items-center justify-between gap-x-4 mt-4">
-        <div>
-          <p>Amount</p>
-          <p className="font-bold text-2xl">10.000.000</p>
-          <p className="text-xs">Avg 2.333.333</p>
-        </div>
-        <button
-          type="button"
-          className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
-        >
-          <span>Last 7 days</span>
-          <ChevronDownIcon />
-        </button>
-      </div>
-
-      <div className="flex items-end gap-x-2 pt-12 mt-4">
-        <div className="min-w-8 w-full">
-          <div className="bg-white/30 rounded-xl" style={{ height: "100px" }} />
-          <p className="mt-1 text-center">1</p>
-        </div>
-        <div className="min-w-8 w-full">
-          <div className="bg-white/30 rounded-xl" style={{ height: "120px" }} />
-          <p className="mt-1 text-center">2</p>
-        </div>
-        <div className="min-w-8 w-full">
-          <div className="bg-white/30 rounded-xl" style={{ height: "110px" }} />
-          <p className="mt-1 text-center">3</p>
-        </div>
-        <div className="min-w-8 w-full">
-          <div className="bg-white/30 rounded-xl" style={{ height: "170px" }} />
-          <p className="mt-1 text-center">4</p>
-        </div>
-        <div className="min-w-8 w-full">
-          <div className="bg-white/30 rounded-xl" style={{ height: "190px" }} />
-          <p className="mt-1 text-center">5</p>
-        </div>
-        <div className="min-w-8 w-full">
-          <div className="bg-white/30 rounded-xl" style={{ height: "140px" }} />
-          <p className="mt-1 text-center">6</p>
-        </div>
-        <div className="relative min-w-8 w-full">
-          <div className="absolute -top-12.5 right-0 py-1 px-2 bg-white text-black text-right rounded-l-lg rounded-tr-lg">
-            <p className="font-bold">3.000.000</p>
-            <p className="text-xs">37%</p>
-          </div>
-          <div className="bg-white rounded-xl" style={{ height: "200px" }} />
-          <p className="mt-1 text-center">7</p>
-        </div>
+      <div className="mt-4">
+        <Amount />
       </div>
 
       <div className="mt-4">
-        <Wallets />
+        <Graph />
       </div>
 
       <div className="mt-4">
-        <Categories />
+        <Wallets isLoading={wallet.isLoading} data={wallet.data} />
       </div>
 
       <div className="mt-4">
-        <History />
+        <Categories isLoading={category.isLoading} data={category.data} />
+      </div>
+
+      <div className="mt-4">
+        <History isLoading={history.isLoading} data={history.data} />
       </div>
     </>
   );

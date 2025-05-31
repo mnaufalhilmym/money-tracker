@@ -149,20 +149,25 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
       value,
       formImageList.map((f) => ({ key: "images", file: f.file }))
     );
-    if (!props.history) {
-      await clientInternalApiCall("/api/history", undefined, {
-        method: "POST",
-        body: formData,
-      });
-    } else {
-      await clientInternalApiCall(
-        "/api/history/" + props.history.id,
-        undefined,
-        {
-          method: "PUT",
+
+    try {
+      if (!props.history) {
+        await clientInternalApiCall("/api/history", undefined, {
+          method: "POST",
           body: formData,
-        }
-      );
+        });
+      } else {
+        await clientInternalApiCall(
+          "/api/history/" + props.history.id,
+          undefined,
+          {
+            method: "PUT",
+            body: formData,
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Error onSubmit HistoryForm", error);
     }
 
     props.close();

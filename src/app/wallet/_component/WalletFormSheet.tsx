@@ -39,16 +39,24 @@ export default function WalletFormSheet(props: Readonly<Props>) {
 
     setIsLoadingSubmit(true);
 
-    if (!props.wallet) {
-      await clientInternalApiCall("/api/wallet", undefined, {
-        method: "POST",
-        body: JSON.stringify(value),
-      });
-    } else {
-      await clientInternalApiCall("/api/wallet/" + props.wallet.id, undefined, {
-        method: "PUT",
-        body: JSON.stringify(value),
-      });
+    try {
+      if (!props.wallet) {
+        await clientInternalApiCall("/api/wallet", undefined, {
+          method: "POST",
+          body: JSON.stringify(value),
+        });
+      } else {
+        await clientInternalApiCall(
+          "/api/wallet/" + props.wallet.id,
+          undefined,
+          {
+            method: "PUT",
+            body: JSON.stringify(value),
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Error onSubmit WalletForm", error);
     }
 
     props.close();

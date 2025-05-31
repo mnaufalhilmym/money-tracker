@@ -1,8 +1,15 @@
 import Button from "@/component/button/Button";
 import OpenIcon from "@/component/icon/OpenIcon";
+import Loading from "@/component/loading/Loading";
+import NotFound from "@/component/notFound/NotFound";
 import Link from "next/link";
 
-export default function Wallets() {
+interface Props {
+  isLoading?: boolean;
+  data: WalletI[];
+}
+
+export default function Wallets(props: Readonly<Props>) {
   return (
     <>
       <div className="flex items-center justify-between font-bold">
@@ -11,51 +18,44 @@ export default function Wallets() {
           <OpenIcon />
         </Link>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-4">
-        <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-          <p>GoPay</p>
-          <div className="mt-1">
-            <div className="flex items-end gap-x-1.5">
-              <p className="font-bold text-xl">1.000.000</p>
-              <p>(23%)</p>
+
+      {!props.isLoading && !!props.data.length && (
+        <div className="mt-2 grid grid-cols-2 gap-4">
+          {props.data.map((d) => (
+            <div
+              key={`wallet_${d.id}`}
+              className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20"
+            >
+              <p>{d.name}</p>
+              <div className="mt-1">
+                <div className="flex items-end gap-x-1.5">
+                  <p className="font-bold text-xl">{d.amount}</p>
+                  <p>({d.amount_percentage}%)</p>
+                </div>
+                <p className="text-xs">Avg {d.amount_average}</p>
+              </div>
             </div>
-            <p className="text-xs">Avg 100.000</p>
-          </div>
+          ))}
         </div>
-        <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-          <p>AstraPay</p>
-          <div className="mt-1">
-            <div className="flex items-end gap-x-1.5">
-              <p className="font-bold text-xl">100.000.000</p>
-              <p>(23%)</p>
-            </div>
-            <p className="text-xs">Avg 10.000.000</p>
-          </div>
+      )}
+
+      {!props.isLoading && !props.data.length && (
+        <div className="mt-4">
+          <NotFound />
         </div>
-        <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-          <p>Bank Jago</p>
-          <div className="mt-1">
-            <div className="flex items-end gap-x-1.5">
-              <p className="font-bold text-xl">700.000</p>
-              <p>(23%)</p>
-            </div>
-            <p className="text-xs">Avg 100.000</p>
-          </div>
+      )}
+
+      {props.isLoading && (
+        <div className="mt-4">
+          <Loading />
         </div>
-        <div className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20">
-          <p>Bank Saqu</p>
-          <div className="mt-1">
-            <div className="flex items-end gap-x-1.5">
-              <p className="font-bold text-xl">990.000</p>
-              <p>(23%)</p>
-            </div>
-            <p className="text-xs">Avg 200.000</p>
-          </div>
+      )}
+
+      {!props.isLoading && !!props.data.length && (
+        <div className="mt-4">
+          <Button type="button">See more</Button>
         </div>
-      </div>
-      <div className="mt-4">
-        <Button type="button">See more</Button>
-      </div>
+      )}
     </>
   );
 }

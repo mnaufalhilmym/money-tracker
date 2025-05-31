@@ -20,9 +20,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const search = searchParams.get("s");
+    const filterDatetimeFrom = searchParams.get("dtf");
     const filterTypes = searchParams.getAll("ft");
     const filterWallets = searchParams.getAll("fw");
     const filterCategories = searchParams.getAll("fc");
+    let limit = Number(searchParams.get("l"));
+    let page = Number(searchParams.get("p"));
 
     await dbMigrate();
 
@@ -32,6 +35,7 @@ export async function GET(request: NextRequest) {
       " h.description," +
       " t.id type_id," +
       " t.name type_name," +
+      " t.amount_prefix type_amount_prefix," +
       " w.id wallet_id," +
       " w.name wallet_name," +
       " c.id category_id," +
@@ -51,6 +55,7 @@ export async function GET(request: NextRequest) {
       " LEFT JOIN images i ON i.id = hi.image_id AND i.user_id = h.user_id" +
       " WHERE h.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
+
     if (search) {
       queryParams.push(`%${search}%`);
       querySql +=
@@ -59,6 +64,11 @@ export async function GET(request: NextRequest) {
         ` OR h.location_name ILIKE $${queryParams.length}` +
         ` OR h.location_display_name ILIKE $${queryParams.length}` +
         ")";
+    }
+
+    if (filterDatetimeFrom) {
+      queryParams.push(filterDatetimeFrom);
+      querySql += ` AND h.datetime >= $${queryParams.length}`;
     }
 
     queryParams.push(filterTypes);
@@ -71,6 +81,19 @@ export async function GET(request: NextRequest) {
     querySql += ` AND c.id = ANY($${queryParams.length})`;
 
     querySql += " GROUP BY h.id, t.id, w.id, c.id";
+    querySql += " ORDER BY h.datetime DESC";
+
+    if (!(!isNaN(limit) && limit > 0)) {
+      limit = 30;
+    }
+    queryParams.push(limit);
+    querySql += ` LIMIT $${queryParams.length}`;
+
+    if (!(!isNaN(page) && page > 1)) {
+      page = 1;
+    }
+    queryParams.push((page - 1) * limit);
+    querySql += ` OFFSET $${queryParams.length}`;
 
     const history = await pool.query<HistoryI>(querySql, queryParams);
 

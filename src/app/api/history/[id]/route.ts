@@ -30,6 +30,7 @@ export async function GET(
         " h.description," +
         " t.id type_id," +
         " t.name type_name," +
+        " t.amount_prefix type_amount_prefix," +
         " w.id wallet_id," +
         " w.name wallet_name," +
         " c.id category_id," +

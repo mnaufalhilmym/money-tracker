@@ -8,11 +8,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import WalletFormSheet from "./_component/WalletFormSheet";
 import WalletFilterSheet from "./_component/WalletFilterSheet";
-import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
 import useDebounce from "@/hook/useDebounce";
 import getTypes from "@/util/fetchData/getTypes";
+import apiGetWallets from "@/util/fetchData/getWallets";
 
 async function getWallets(params?: { search?: string; filter?: number[] }) {
   const queryParams: { key: string; value: string | number }[] = [];
@@ -21,13 +21,11 @@ async function getWallets(params?: { search?: string; filter?: number[] }) {
   }
   if (params?.filter && params.filter.length > 0) {
     params.filter.forEach((filter) => {
-      queryParams.push({ key: "f", value: filter });
+      queryParams.push({ key: "ft", value: filter });
     });
   }
 
-  const response = await clientInternalApiCall("/api/wallet", queryParams);
-
-  const data: WalletI[] = await response.json();
+  const data = await apiGetWallets(queryParams);
 
   return data;
 }
@@ -146,6 +144,7 @@ export default function Wallets() {
                 </div>
               </div>
             )}
+
             {!!savingWallets.length && (
               <div>
                 <p className="font-bold text-lg">Saving</p>
@@ -162,6 +161,7 @@ export default function Wallets() {
                 </div>
               </div>
             )}
+
             {!spendingWallets.length && !savingWallets.length && <NotFound />}
           </>
         ) : (

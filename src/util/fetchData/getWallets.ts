@@ -3,12 +3,16 @@ import { clientInternalApiCall } from "../fetch/fromClient";
 export default async function getWallets(
   filterQueryParams: {
     key: string;
-    value: number;
-  }[]
+    value: string | number;
+  }[],
+  abortSignal?: AbortSignal
 ) {
   const respWallets = await clientInternalApiCall(
     "/api/wallet",
-    filterQueryParams
+    filterQueryParams,
+    {
+      signal: abortSignal,
+    }
   );
   const wallets: WalletI[] = await respWallets.json();
   return wallets;

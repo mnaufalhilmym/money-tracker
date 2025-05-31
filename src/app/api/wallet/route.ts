@@ -12,24 +12,63 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
+    const calculateAmount = !!searchParams.get("a");
     const search = searchParams.get("s");
-    const filters = searchParams.getAll("f");
+    const filterDatetimeFrom = searchParams.get("dtf");
+    const filters = searchParams.getAll("ft");
+    let limit = Number(searchParams.get("l"));
+    let page = Number(searchParams.get("p"));
 
     await dbMigrate();
 
     let querySql =
-      "SELECT w.id id, w.user_id user_id, w.name name, t.id type_id, t.name type_name" +
+      "SELECT" +
+      " w.id id," +
+      " w.user_id user_id," +
+      " w.name name," +
+      " t.id type_id," +
+      " t.name type_name" +
+      (calculateAmount ? ", COALESCE(SUM(h.amount), 0) amount" : "") +
+      (calculateAmount
+        ? ", COALESCE(ROUND(SUM(h.amount)*100.0/SUM(SUM(h.amount)) OVER(), 2), 0) amount_percentage"
+        : "") +
+      (calculateAmount
+        ? ", COALESCE(ROUND(AVG(h.amount), 2), 0) amount_average"
+        : "") +
       " FROM wallets w" +
       " JOIN types t ON t.id = w.type_id" +
+      (calculateAmount ? " LEFT JOIN history h ON h.wallet_id = w.id" : "") +
       " WHERE w.deleted_at IS NULL AND w.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
+
     if (search) {
       queryParams.push(`%${search}%`);
       querySql += ` AND w.name ILIKE $${queryParams.length}`;
     }
 
+    if (calculateAmount && filterDatetimeFrom) {
+      queryParams.push(filterDatetimeFrom);
+      querySql += ` AND h.datetime >= $${queryParams.length}`;
+    }
+
     queryParams.push(filters);
     querySql += ` AND t.id = ANY($${queryParams.length})`;
+
+    if (calculateAmount) {
+      querySql += " GROUP BY w.id, t.id";
+    }
+
+    if (!(!isNaN(limit) && limit > 0)) {
+      limit = 30;
+    }
+    queryParams.push(limit);
+    querySql += ` LIMIT $${queryParams.length}`;
+
+    if (!(!isNaN(page) && page > 1)) {
+      page = 1;
+    }
+    queryParams.push((page - 1) * limit);
+    querySql += ` OFFSET $${queryParams.length}`;
 
     const wallets = await pool.query<WalletI>(querySql, queryParams);
 

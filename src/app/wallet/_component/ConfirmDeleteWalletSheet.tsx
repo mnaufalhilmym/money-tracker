@@ -21,9 +21,13 @@ export default function ConfirmDeleteWalletSheet(props: Readonly<Props>) {
   async function remove() {
     setIsLoadingRemove(true);
 
-    await clientInternalApiCall("/api/wallet/" + props.wallet.id, undefined, {
-      method: "DELETE",
-    });
+    try {
+      await clientInternalApiCall("/api/wallet/" + props.wallet.id, undefined, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error remove wallet", error);
+    }
 
     props.close();
     props.afterDelete();

@@ -21,9 +21,17 @@ export default function ConfirmDeleteHistorySheet(props: Readonly<Props>) {
   async function remove() {
     setIsLoadingRemove(true);
 
-    await clientInternalApiCall("/api/history/" + props.history.id, undefined, {
-      method: "DELETE",
-    });
+    try {
+      await clientInternalApiCall(
+        "/api/history/" + props.history.id,
+        undefined,
+        {
+          method: "DELETE",
+        }
+      );
+    } catch (error) {
+      console.error("Error remove history", error);
+    }
 
     props.close();
     props.afterDelete();

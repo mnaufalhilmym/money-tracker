@@ -21,13 +21,17 @@ export default function ConfirmDeleteCategorySheet(props: Readonly<Props>) {
   async function remove() {
     setIsLoadingRemove(true);
 
-    await clientInternalApiCall(
-      "/api/category/" + props.category.id,
-      undefined,
-      {
-        method: "DELETE",
-      }
-    );
+    try {
+      await clientInternalApiCall(
+        "/api/category/" + props.category.id,
+        undefined,
+        {
+          method: "DELETE",
+        }
+      );
+    } catch (error) {
+      console.error("Error remove category", error);
+    }
 
     props.close();
     props.afterDelete();

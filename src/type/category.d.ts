@@ -8,4 +8,6 @@ interface CategoryI {
 
   type_name?: string;
   amount?: number;
+  amount_percentage?: number;
+  amount_average?: number;
 }

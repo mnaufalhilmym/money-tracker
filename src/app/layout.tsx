@@ -1,3 +1,4 @@
+import Footer from "@/component/footer/Footer";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Karla } from "next/font/google";
@@ -32,9 +33,15 @@ export default function RootLayout({
       </head>
 
       <body
-        className={`${karla.className} antialiased max-w-md mx-auto p-4 bg-black text-white text-sm`}
+        className={`max-w-md mx-auto flex flex-col bg-black text-white text-sm ${karla.className} antialiased`}
       >
-        <main>{children}</main>
+        <main className="min-h-screen flex-1 p-4">{children}</main>
+
+        <div className="mt-4 space-y-2">
+          <div className="h-0.5 bg-white/20" />
+
+          <Footer />
+        </div>
       </body>
     </html>
   );

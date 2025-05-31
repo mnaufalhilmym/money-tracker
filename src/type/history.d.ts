@@ -3,6 +3,7 @@ interface HistoryI {
   description?: string;
   type_id?: number;
   type_name?: string;
+  type_amount_prefix?: string;
   wallet_id?: number;
   wallet_name?: string;
   category_id?: number;

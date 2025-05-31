@@ -8,11 +8,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import CategoryFormSheet from "./_component/CategoryFormSheet";
 import CategoryFilterSheet from "./_component/CategoryFilterSheet";
-import { clientInternalApiCall } from "@/util/fetch/fromClient";
 import useDebounce from "@/hook/useDebounce";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
 import getTypes from "@/util/fetchData/getTypes";
+import apiGetCategories from "@/util/fetchData/getCategories";
 
 async function getCategories(params?: { search?: string; filter?: number[] }) {
   const queryParams: { key: string; value: string | number }[] = [];
@@ -21,13 +21,11 @@ async function getCategories(params?: { search?: string; filter?: number[] }) {
   }
   if (params?.filter && params.filter.length > 0) {
     params.filter.forEach((filter) => {
-      queryParams.push({ key: "f", value: filter });
+      queryParams.push({ key: "ft", value: filter });
     });
   }
 
-  const response = await clientInternalApiCall("/api/category", queryParams);
-
-  const data: CategoryI[] = await response.json();
+  const data = await apiGetCategories(queryParams);
 
   return data;
 }
@@ -149,6 +147,7 @@ export default function Categories() {
                 </div>
               </div>
             )}
+
             {!!savingCategories.length && (
               <div>
                 <p className="font-bold text-lg">Saving</p>
@@ -169,6 +168,7 @@ export default function Categories() {
                 </div>
               </div>
             )}
+
             {!spendingCategories.length && !savingCategories.length && (
               <NotFound />
             )}
