@@ -22,6 +22,7 @@ import toTitleCase from "@/util/titleCase";
 import toFormData from "@/util/formData";
 import DescriptionInput from "./form/DescriptionInput";
 import DateTimeInput from "./form/DateTimeInput";
+import Log from "@/util/log";
 
 interface Props {
   isOpen: boolean;
@@ -166,8 +167,10 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           }
         );
       }
-    } catch (error) {
-      console.error("Error onSubmit HistoryForm", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error onSubmit HistoryForm", error);
+      }
     }
 
     props.close();

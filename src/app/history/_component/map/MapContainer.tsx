@@ -8,6 +8,7 @@ import SearchIcon from "@/component/icon/SearchIcon";
 import SearchList from "./SearchList";
 import { Map } from "leaflet";
 import GeolocationErrorSheet from "./GeolocationErrorSheet";
+import Log from "@/util/log";
 
 interface Props {
   isSheetOpen: boolean;
@@ -121,7 +122,7 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
       setIsLoadingSearchResult(false);
 
       return () => {
-        abortController.abort("Search new location query");
+        abortController.abort();
       };
     })();
   }, [debounceSearchLocation]);
@@ -164,21 +165,27 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
     mapRef.current?.setView([lat, lng]);
 
     // Call reverse geocoding using Nominatim
-    fetchControllerRef.current?.abort("Get new location info");
+    fetchControllerRef.current?.abort();
     fetchControllerRef.current = new AbortController();
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-      { signal: fetchControllerRef.current?.signal }
-    );
-    const data: NovatimLocation = await res.json();
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+        { signal: fetchControllerRef.current?.signal }
+      );
+      const data: NovatimLocation = await res.json();
 
-    setLocation({ name: data.name, displayName: data.display_name });
-    props.onPick({
-      lat,
-      lng,
-      name: data.name,
-      displayName: data.display_name,
-    });
+      setLocation({ name: data.name, displayName: data.display_name });
+      props.onPick({
+        lat,
+        lng,
+        name: data.name,
+        displayName: data.display_name,
+      });
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error nominatim.openstreetmap.org", error);
+      }
+    }
 
     props.setIsLoading(false);
   }

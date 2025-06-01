@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import ConfirmDeleteCategorySheet from "./ConfirmDeleteCategorySheet";
 import RadioInput from "@/component/input/RadioInput";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import Log from "@/util/log";
 
 interface Props {
   isOpen: boolean;
@@ -55,8 +56,10 @@ export default function CategoryFormSheet(props: Readonly<Props>) {
           }
         );
       }
-    } catch (error) {
-      console.error("Error onSubmit CategoryForm", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error onSubmit CategoryForm", error);
+      }
     }
 
     props.close();

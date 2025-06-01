@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import LoadingIcon from "../../../component/icon/LoadingIcon";
+import Log from "@/util/log";
 
 export default function GoogleSignInButton() {
   const divRef = useRef<HTMLDivElement>(null);
@@ -49,7 +50,7 @@ export default function GoogleSignInButton() {
 
       router.replace("/");
     } catch (err) {
-      console.error("Google signin failed", err);
+      Log.error("Google signin failed", err);
     } finally {
       setIsLoading(false);
     }

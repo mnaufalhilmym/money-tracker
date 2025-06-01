@@ -10,6 +10,7 @@ import { insertHistoryImagesTx } from "./_util/dbInsertHistoryImages";
 import { selectHistoryTx } from "./_util/dbSelectHistory";
 import { validateCategoryId, validateWalletId } from "./_util/validation";
 import dbMigrate from "../_lib/db/migrate";
+import Log from "@/util/log";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -109,7 +110,7 @@ export async function GET(request: NextRequest) {
       total: total.rows[0].total,
     });
   } catch (error) {
-    console.error("Failed to get many history:", error);
+    Log.error("Failed to get many history:", error);
     return NextResponse.json(
       {
         error: "Failed to get many history",
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("Failed to add new history:", error);
+    Log.error("Failed to add new history:", error);
     return NextResponse.json(
       {
         error: "Failed to add new history",

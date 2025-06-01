@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import ConfirmDeleteWalletSheet from "./ConfirmDeleteWalletSheet";
 import RadioInput from "@/component/input/RadioInput";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import Log from "@/util/log";
 
 interface Props {
   isOpen: boolean;
@@ -55,8 +56,10 @@ export default function WalletFormSheet(props: Readonly<Props>) {
           }
         );
       }
-    } catch (error) {
-      console.error("Error onSubmit WalletForm", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error onSubmit WalletForm", error);
+      }
     }
 
     props.close();

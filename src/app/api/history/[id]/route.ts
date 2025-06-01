@@ -10,6 +10,7 @@ import { insertHistoryImagesTx } from "../_util/dbInsertHistoryImages";
 import { selectHistoryTx } from "../_util/dbSelectHistory";
 import { validateCategoryId, validateWalletId } from "../_util/validation";
 import dbMigrate from "../../_lib/db/migrate";
+import Log from "@/util/log";
 
 export async function GET(
   request: NextRequest,
@@ -55,7 +56,7 @@ export async function GET(
 
     return NextResponse.json(history.rows[0]);
   } catch (error) {
-    console.error("Failed to get a history:", error);
+    Log.error("Failed to get a history:", error);
     return NextResponse.json(
       {
         error: "Failed to get a history",
@@ -217,7 +218,7 @@ export async function PUT(
       client.release();
     }
   } catch (error) {
-    console.error("Failed to update a history:", error);
+    Log.error("Failed to update a history:", error);
     return NextResponse.json(
       {
         error: "Failed to update a history",
@@ -296,7 +297,7 @@ export async function DELETE(
       client.release();
     }
   } catch (error) {
-    console.error("Failed to delete a history:", error);
+    Log.error("Failed to delete a history:", error);
     return NextResponse.json(
       {
         error: "Failed to delete a history",

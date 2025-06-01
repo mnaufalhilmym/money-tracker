@@ -3,6 +3,7 @@ import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "../_lib/db/db";
 import dbMigrate from "../_lib/db/migrate";
+import Log from "@/util/log";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
     const calculateAmount = !!searchParams.get("a");
     const search = searchParams.get("s");
     const filterDatetimeFrom = searchParams.get("dtf");
-    const filters = searchParams.getAll("ft");
+    const filterTypes = searchParams.getAll("ft");
+    const filterCategories = searchParams.getAll("fc");
     let limit = Number(searchParams.get("l"));
     let page = Number(searchParams.get("p"));
 
@@ -37,7 +39,12 @@ export async function GET(request: NextRequest) {
         : "") +
       " FROM wallets w" +
       " JOIN types t ON t.id = w.type_id" +
-      (calculateAmount ? " LEFT JOIN history h ON h.wallet_id = w.id" : "") +
+      (calculateAmount || filterCategories.length
+        ? " LEFT JOIN history h ON h.wallet_id = w.id"
+        : "") +
+      (filterCategories.length
+        ? " LEFT JOIN categories c ON c.id = h.category_id"
+        : "") +
       " WHERE w.deleted_at IS NULL AND w.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
 
@@ -51,8 +58,13 @@ export async function GET(request: NextRequest) {
       querySql += ` AND h.datetime >= $${queryParams.length}`;
     }
 
-    queryParams.push(filters);
+    queryParams.push(filterTypes);
     querySql += ` AND t.id = ANY($${queryParams.length})`;
+
+    if (filterCategories.length) {
+      queryParams.push(filterCategories);
+      querySql += ` AND c.id = ANY($${queryParams.length})`;
+    }
 
     if (calculateAmount) {
       querySql += " GROUP BY w.id, t.id";
@@ -85,7 +97,7 @@ export async function GET(request: NextRequest) {
       total: total.rows[0].total,
     });
   } catch (error) {
-    console.error("Failed to get many wallets:", error);
+    Log.error("Failed to get many wallets:", error);
     return NextResponse.json(
       {
         error: "Failed to get many wallets",
@@ -135,7 +147,7 @@ export async function POST(request: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("Failed to add new wallet:", error);
+    Log.error("Failed to add new wallet:", error);
     return NextResponse.json(
       {
         error: "Failed to add new wallet",

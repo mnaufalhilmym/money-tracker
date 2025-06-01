@@ -1,6 +1,7 @@
 import Button from "@/component/button/Button";
 import BottomSheet from "@/component/sheet/BottomSheet";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import Log from "@/util/log";
 import { useState } from "react";
 
 interface Props {
@@ -29,8 +30,10 @@ export default function ConfirmDeleteHistorySheet(props: Readonly<Props>) {
           method: "DELETE",
         }
       );
-    } catch (error) {
-      console.error("Error remove history", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error remove history", error);
+      }
     }
 
     props.close();

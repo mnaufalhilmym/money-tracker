@@ -3,7 +3,7 @@ import { clientInternalApiCall } from "../fetch/fromClient";
 export default async function getCategories(
   filterQueryParams: {
     key: string;
-    value: string | number;
+    value: string | number | Date;
   }[],
   abortSignal?: AbortSignal
 ) {

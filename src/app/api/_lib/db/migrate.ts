@@ -6,6 +6,7 @@ import migrateHistoryImagesTable from "./table/history_images";
 import migrateImagesTable from "./table/images";
 import migrateTypesTable from "./table/types";
 import migrateWalletsTable from "./table/wallets";
+import Log from "@/util/log";
 
 const mutex = withTimeout(new Mutex(), 100);
 
@@ -15,15 +16,15 @@ const migrationDatetimes = [new Date("2025-05-29T08:20:00+07:00")];
 
 export default async function dbMigrate() {
   try {
-    console.info("Preparing to run migration");
+    Log.info("Preparing to run migration");
     const release = await mutex.acquire();
     if (hasRun) {
-      console.info("Canceling migration: Migration has been run previously");
+      Log.info("Canceling migration: Migration has been run previously");
       release();
       return;
     }
 
-    console.info("Running migration");
+    Log.info("Running migration");
 
     const client = await pool.connect();
     try {
@@ -69,9 +70,9 @@ export default async function dbMigrate() {
       }
 
       hasRun = true;
-      console.info("Migration finished");
+      Log.info("Migration finished");
     } catch (error) {
-      console.error("DB migration failed", error);
+      Log.error("DB migration failed", error);
       await client.query("ROLLBACK");
     } finally {
       client.release();

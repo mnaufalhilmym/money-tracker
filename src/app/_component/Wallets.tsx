@@ -4,38 +4,28 @@ import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
 import toTitleCase from "@/util/titleCase";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 
 interface Props {
   typeName: string;
   isLoading?: boolean;
   canLoadMore?: boolean;
   data: WalletI[];
-  getWallets: (abortSignal: AbortSignal, page?: number) => Promise<void>;
+  getWallets: (abortSignal: AbortSignal) => Promise<void>;
 }
 
 export default function Wallets(props: Readonly<Props>) {
-  const [page, setPage] = useState(1);
+  const abortController = useRef<AbortController>(null);
 
-  useEffect(() => {
-    if (page <= 1) return;
-
-    const abortController = new AbortController();
-
-    loadMore(abortController.signal);
-
-    return () => {
-      abortController.abort();
-    };
-  }, [page]);
-
-  function onClickSeeMore(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+  async function onClickSeeMore(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) {
     e.stopPropagation();
-    setPage((prev) => prev + 1);
-  }
 
-  async function loadMore(abortSignal: AbortSignal) {
-    await props.getWallets(abortSignal, page);
+    abortController.current?.abort();
+    abortController.current = new AbortController();
+
+    await props.getWallets(abortController.current.signal);
   }
 
   return (

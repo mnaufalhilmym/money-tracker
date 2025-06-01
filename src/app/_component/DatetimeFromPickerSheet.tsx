@@ -1,17 +1,18 @@
 import CloseIcon from "@/component/icon/CloseIcon";
 import BottomSheet from "@/component/sheet/BottomSheet";
+import PickerSelectButton from "./PickerSelectButton";
 
 interface Props {
   isOpen: boolean;
   close: () => void;
-  categories: CategoryI[];
-  category?: number;
-  setCategory: (category: CategoryI) => void;
+  datetimeFromOptions: AmountDatetimeFrom[];
+  datetimeFrom: AmountDatetimeFrom;
+  setDatetimeFrom: (from: AmountDatetimeFrom) => void;
 }
 
-export default function HistoryCategoryPickerSheet(props: Readonly<Props>) {
-  function setCategory(category: CategoryI) {
-    props.setCategory(category);
+export default function DatetimeFromPickerSheet(props: Readonly<Props>) {
+  function setDatetimeFrom(from: AmountDatetimeFrom) {
+    props.setDatetimeFrom(from);
     props.close();
   }
 
@@ -19,7 +20,7 @@ export default function HistoryCategoryPickerSheet(props: Readonly<Props>) {
     <BottomSheet isOpen={props.isOpen} close={props.close}>
       <div className="flex items-center justify-between text-lg">
         <div className="w-6.5 h-6.5" />
-        <p className="font-bold text-center">Pick a Category</p>
+        <p className="font-bold text-center">Pick a Datetime</p>
         <div className="w-6.5 h-6.5 flex items-center justify-center">
           <button
             type="button"
@@ -32,17 +33,14 @@ export default function HistoryCategoryPickerSheet(props: Readonly<Props>) {
       </div>
 
       <div className="mt-2">
-        {props.categories.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => setCategory(c)}
-            className={`block w-full p-1 text-center ${
-              props.category === c.id ? "font-bold" : "font-normal"
-            } cursor-pointer`}
+        {props.datetimeFromOptions.map((dt) => (
+          <PickerSelectButton
+            key={`datetime_${dt.name}`}
+            onClick={() => setDatetimeFrom(dt)}
+            isActive={props.datetimeFrom.name === dt.name}
           >
-            {c.name}
-          </button>
+            {dt.name}
+          </PickerSelectButton>
         ))}
       </div>
     </BottomSheet>

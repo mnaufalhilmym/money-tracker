@@ -15,6 +15,7 @@ import getTypes from "@/util/fetchData/getTypes";
 import getWallets from "@/util/fetchData/getWallets";
 import getCategories from "@/util/fetchData/getCategories";
 import apiGetHistory from "@/util/fetchData/getHistory";
+import Log from "@/util/log";
 
 async function getHistory(
   abortSignal: AbortSignal,
@@ -197,7 +198,7 @@ export default function History() {
   }
 
   async function fetchHistory(reset?: boolean) {
-    historyFetchAbortController.current?.abort("New fetchHistory request");
+    historyFetchAbortController.current?.abort();
     historyFetchAbortController.current = new AbortController();
 
     let historyPage = 1;
@@ -251,8 +252,10 @@ export default function History() {
         page: historyPage,
         canLoadMore: history.total > prev.data.length + history.data.length,
       }));
-    } catch (error) {
-      console.error("Error fetchHistory", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error fetchHistory", error);
+      }
     }
   }
 

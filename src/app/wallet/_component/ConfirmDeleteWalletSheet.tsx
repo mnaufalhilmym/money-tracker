@@ -1,6 +1,7 @@
 import Button from "@/component/button/Button";
 import BottomSheet from "@/component/sheet/BottomSheet";
 import { clientInternalApiCall } from "@/util/fetch/fromClient";
+import Log from "@/util/log";
 import { useState } from "react";
 
 interface Props {
@@ -25,8 +26,10 @@ export default function ConfirmDeleteWalletSheet(props: Readonly<Props>) {
       await clientInternalApiCall("/api/wallet/" + props.wallet.id, undefined, {
         method: "DELETE",
       });
-    } catch (error) {
-      console.error("Error remove wallet", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error remove wallet", error);
+      }
     }
 
     props.close();

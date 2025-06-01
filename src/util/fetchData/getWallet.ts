@@ -1,6 +1,7 @@
 import { clientInternalApiCall } from "../fetch/fromClient";
 
-export default async function getWallets(
+export default async function getWallet(
+  id: number,
   filterQueryParams: {
     key: string;
     value: string | number | Date;
@@ -8,12 +9,12 @@ export default async function getWallets(
   abortSignal?: AbortSignal
 ) {
   const respWallets = await clientInternalApiCall(
-    "/api/wallet",
+    `/api/wallet/${id}`,
     filterQueryParams,
     {
       signal: abortSignal,
     }
   );
-  const wallets: ApiResponse<WalletI[]> = await respWallets.json();
-  return wallets;
+  const wallet: WalletI = await respWallets.json();
+  return wallet;
 }

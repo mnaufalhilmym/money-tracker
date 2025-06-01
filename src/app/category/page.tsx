@@ -13,6 +13,7 @@ import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
 import getTypes from "@/util/fetchData/getTypes";
 import apiGetCategories from "@/util/fetchData/getCategories";
+import Log from "@/util/log";
 
 async function getCategories(
   abortSignal: AbortSignal,
@@ -112,9 +113,7 @@ export default function Categories() {
   }
 
   async function fetchCategories(reset?: boolean) {
-    categoriesFetchAbortController.current?.abort(
-      "New fetchCategories request"
-    );
+    categoriesFetchAbortController.current?.abort();
     categoriesFetchAbortController.current = new AbortController();
 
     let categoriesPage = 1;
@@ -147,8 +146,10 @@ export default function Categories() {
         canLoadMore:
           categories.total > prev.data.length + categories.data.length,
       }));
-    } catch (error) {
-      console.error("Error fetchCategories", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error fetchCategories", error);
+      }
     }
   }
 

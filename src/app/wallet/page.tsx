@@ -13,6 +13,7 @@ import NotFound from "@/component/notFound/NotFound";
 import useDebounce from "@/hook/useDebounce";
 import getTypes from "@/util/fetchData/getTypes";
 import apiGetWallets from "@/util/fetchData/getWallets";
+import Log from "@/util/log";
 
 async function getWallets(
   abortSignal: AbortSignal,
@@ -108,7 +109,7 @@ export default function Wallets() {
   }
 
   async function fetchWallets(reset?: boolean) {
-    walletsFetchAbortController.current?.abort("New fetchWallets request");
+    walletsFetchAbortController.current?.abort();
     walletsFetchAbortController.current = new AbortController();
 
     let walletsPage = 1;
@@ -140,8 +141,10 @@ export default function Wallets() {
         page: walletsPage,
         canLoadMore: wallets.total > prev.data.length + wallets.data.length,
       }));
-    } catch (error) {
-      console.error("Error fetchWallets", error);
+    } catch (error: unknown) {
+      if (!(error instanceof Error) || error.name !== "AbortError") {
+        Log.error("Error fetchWallets", error);
+      }
     }
   }
 

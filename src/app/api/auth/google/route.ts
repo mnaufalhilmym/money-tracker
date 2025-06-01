@@ -1,6 +1,7 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import removeTokenCookie from "@/util/api/removeTokenCookie";
+import Log from "@/util/log";
 import { NextRequest, NextResponse } from "next/server";
 import { parse } from "tldts";
 
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       picture: tokenData.picture,
     });
   } catch (error) {
-    console.error("Error verifying Google token:", error);
+    Log.error("Error verifying Google token:", error);
     const response = NextResponse.json(
       { error: "Token verification failed" },
       { status: 401 }
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Error verifying Google token:", error);
+    Log.error("Error verifying Google token:", error);
     return NextResponse.json(
       { error: "Token verification failed" },
       { status: 401 }

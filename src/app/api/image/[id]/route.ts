@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbMigrate from "../../_lib/db/migrate";
 import pool from "../../_lib/db/db";
 import { createReadStream } from "fs";
+import Log from "@/util/log";
 
 export async function GET(
   request: NextRequest,
@@ -46,7 +47,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Failed to get an image:", error);
+    Log.error("Failed to get an image:", error);
     return NextResponse.json(
       {
         error: "Failed to get an image",

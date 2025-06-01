@@ -1,6 +1,5 @@
 import CloseIcon from "@/component/icon/CloseIcon";
 import BottomSheet from "@/component/sheet/BottomSheet";
-import toTitleCase from "@/util/titleCase";
 
 interface Props {
   isOpen: boolean;
@@ -42,7 +41,7 @@ export default function HistoryWalletPickerSheet(props: Readonly<Props>) {
               props.wallet === w.id ? "font-bold" : "font-normal"
             } cursor-pointer`}
           >
-            {toTitleCase(w.name!)}
+            {w.name}
           </button>
         ))}
       </div>

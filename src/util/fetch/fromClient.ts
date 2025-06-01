@@ -1,10 +1,12 @@
 "use client";
 
+import formatDataField from "../formatDataField";
+
 export async function clientInternalApiCall(
   path: string,
   queryParams?: {
     key: string;
-    value: string | number | boolean;
+    value: string | number | boolean | Date;
   }[],
   init?: RequestInit
 ) {
@@ -12,7 +14,18 @@ export async function clientInternalApiCall(
 
   if (queryParams && queryParams.length > 0) {
     queryParams.forEach(({ key, value }) => {
-      url.searchParams.append(key, String(value));
+      if (value !== undefined && value !== null) {
+        const formattedValue = formatDataField(value);
+        if (formattedValue) {
+          if (Array.isArray(formattedValue)) {
+            for (const value of formattedValue) {
+              url.searchParams.append(key, value);
+            }
+          } else {
+            url.searchParams.append(key, formattedValue);
+          }
+        }
+      }
     });
   }
 

@@ -4,16 +4,30 @@ import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
 import toTitleCase from "@/util/titleCase";
 import Link from "next/link";
+import { useRef } from "react";
 
 interface Props {
   typeName: string;
   isLoading?: boolean;
   canLoadMore?: boolean;
   data: CategoryI[];
-  getCategories: (abortSignal: AbortSignal, page?: number) => Promise<void>;
+  getCategories: (abortSignal: AbortSignal) => Promise<void>;
 }
 
 export default function Categories(props: Readonly<Props>) {
+  const abortController = useRef<AbortController>(null);
+
+  async function onClickSeeMore(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) {
+    e.stopPropagation();
+
+    abortController.current?.abort();
+    abortController.current = new AbortController();
+
+    await props.getCategories(abortController.current.signal);
+  }
+
   return (
     <>
       <div className="flex items-center justify-between font-bold">
@@ -63,7 +77,9 @@ export default function Categories(props: Readonly<Props>) {
 
       {!props.isLoading && !!props.data.length && props.canLoadMore && (
         <div className="mt-4">
-          <Button type="button">See more</Button>
+          <Button type="button" onClick={onClickSeeMore}>
+            See more
+          </Button>
         </div>
       )}
     </>

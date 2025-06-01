@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "../../_lib/db/db";
 import { selectCategory } from "../_util/dbSelectCategory";
 import dbMigrate from "../../_lib/db/migrate";
+import Log from "@/util/log";
 
 export async function GET(
   request: NextRequest,
@@ -15,14 +16,21 @@ export async function GET(
     const tokenData = await processToken(token);
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+
+    const calculateAmount = !!searchParams.get("a");
 
     await dbMigrate();
 
-    const category = await selectCategory(id, tokenData.userId);
+    const category = await selectCategory(
+      id,
+      tokenData.userId,
+      calculateAmount
+    );
 
     return NextResponse.json(category.rows[0]);
   } catch (error) {
-    console.error("Failed to get a category:", error);
+    Log.error("Failed to get a category:", error);
     return NextResponse.json(
       {
         error: "Failed to get a category",
@@ -82,7 +90,7 @@ export async function PUT(
       client.release();
     }
   } catch (error) {
-    console.error("Failed to update a category:", error);
+    Log.error("Failed to update a category:", error);
     return NextResponse.json(
       {
         error: "Failed to update a category",
@@ -112,7 +120,7 @@ export async function DELETE(
 
     return NextResponse.json({ id });
   } catch (error) {
-    console.error("Failed to delete a category:", error);
+    Log.error("Failed to delete a category:", error);
     return NextResponse.json(
       {
         error: "Failed to delete a category",

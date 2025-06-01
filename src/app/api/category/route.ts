@@ -3,6 +3,7 @@ import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "../_lib/db/db";
 import dbMigrate from "../_lib/db/migrate";
+import Log from "@/util/log";
 
 export async function GET(request: NextRequest) {
   const token = getTokenCookie(request);
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
     const calculateAmount = !!searchParams.get("a");
     const search = searchParams.get("s");
     const filterDatetimeFrom = searchParams.get("dtf");
-    const filters = searchParams.getAll("ft");
+    const filterTypes = searchParams.getAll("ft");
+    const filterWallets = searchParams.getAll("fw");
     let limit = Number(searchParams.get("l"));
     let page = Number(searchParams.get("p"));
 
@@ -38,7 +40,12 @@ export async function GET(request: NextRequest) {
         : "") +
       " FROM categories c" +
       " JOIN types t ON t.id = c.type_id" +
-      (calculateAmount ? " LEFT JOIN history h ON h.category_id = c.id" : "") +
+      (calculateAmount || filterWallets.length
+        ? " LEFT JOIN history h ON h.category_id = c.id"
+        : "") +
+      (filterWallets.length
+        ? " LEFT JOIN wallets w ON w.id = h.wallet_id"
+        : "") +
       " WHERE c.deleted_at IS NULL AND c.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
 
@@ -52,8 +59,13 @@ export async function GET(request: NextRequest) {
       querySql += ` AND h.datetime >= $${queryParams.length}`;
     }
 
-    queryParams.push(filters);
+    queryParams.push(filterTypes);
     querySql += ` AND t.id = ANY($${queryParams.length})`;
+
+    if (filterWallets.length) {
+      queryParams.push(filterWallets);
+      querySql += ` AND w.id = ANY($${queryParams.length})`;
+    }
 
     if (calculateAmount) {
       querySql += " GROUP BY c.id, t.id";
@@ -86,7 +98,7 @@ export async function GET(request: NextRequest) {
       total: total.rows[0].total,
     });
   } catch (error) {
-    console.error("Failed to get many categories:", error);
+    Log.error("Failed to get many categories:", error);
     return NextResponse.json(
       {
         error: "Failed to get many categories",
@@ -139,7 +151,7 @@ export async function POST(request: NextRequest) {
       client.release();
     }
   } catch (error) {
-    console.error("Failed to add new category:", error);
+    Log.error("Failed to add new category:", error);
     return NextResponse.json(
       {
         error: "Failed to add new category",
