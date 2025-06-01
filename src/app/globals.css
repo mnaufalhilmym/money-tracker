@@ -11,6 +11,7 @@
 
 .scrollable::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .scrollable::-webkit-scrollbar-thumb {

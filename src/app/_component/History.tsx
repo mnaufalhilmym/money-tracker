@@ -49,7 +49,7 @@ export default function History(props: Readonly<Props>) {
                   className="w-8 h-8 rounded-full"
                   style={{ backgroundColor: d.category_color }}
                 />
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-bold">{d.description}</p>
                   <p className="text-xs text-white/70">
                     {new Date(d.datetime!).toLocaleString()}

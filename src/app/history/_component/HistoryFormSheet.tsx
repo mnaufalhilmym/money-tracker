@@ -81,6 +81,7 @@ export default function HistoryFormSheet(props: Readonly<Props>) {
           type_name: props.types[0].name,
           category_id: c.id,
           category_name: c.name,
+          datetime: new Date().toISOString(),
         }
       );
       setFormImageList([]);

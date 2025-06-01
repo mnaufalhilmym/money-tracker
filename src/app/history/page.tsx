@@ -16,6 +16,7 @@ import getWallets from "@/util/fetchData/getWallets";
 import getCategories from "@/util/fetchData/getCategories";
 import apiGetHistory from "@/util/fetchData/getHistory";
 import Log from "@/util/log";
+import useDateNow from "@/hook/useDateNow";
 
 async function getHistory(
   abortSignal: AbortSignal,
@@ -65,6 +66,8 @@ export default function History() {
 
   const [isInitialize, setIsInitialize] = useState(true);
 
+  const now = useDateNow();
+
   const [types, setTypes] = useState<TypeI[]>([]);
   const [categories, setCategories] = useState<CategoryI[]>([]);
   const [wallets, setWallets] = useState<WalletI[]>([]);
@@ -94,9 +97,9 @@ export default function History() {
   const groupedHistories = useMemo(() => {
     const grouped = new Map<string, (HistoryI & { idx: number })[]>();
 
-    if (!history.data.length) return grouped;
+    if (!history.data.length || !now) return grouped;
 
-    const today = new Date();
+    const today = new Date(now);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
@@ -119,7 +122,7 @@ export default function History() {
     });
 
     return grouped;
-  }, [history.data]);
+  }, [now, history.data]);
 
   useEffect(() => {
     resetTypesCategoriesWallets();

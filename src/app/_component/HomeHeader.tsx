@@ -1,6 +1,7 @@
 "use client";
 
 import LogOutIcon from "@/component/icon/LogOutIcon";
+import useDateNow from "@/hook/useDateNow";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 
@@ -12,8 +13,12 @@ interface Props {
 export default function HomeHeader(props: Readonly<Props>) {
   const router = useRouter();
 
+  const now = useDateNow();
+
   const greeting = useMemo(() => {
-    const hour = new Date().getHours();
+    if (!now) return "";
+
+    const hour = new Date(now).getHours();
 
     if (hour >= 5 && hour < 12) {
       return "Morning";
@@ -25,7 +30,7 @@ export default function HomeHeader(props: Readonly<Props>) {
       return "Evening";
     }
     return "Night";
-  }, []);
+  }, [now]);
 
   async function signOut() {
     await fetch(

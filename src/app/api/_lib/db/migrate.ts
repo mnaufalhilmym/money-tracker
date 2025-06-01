@@ -79,7 +79,7 @@ export default async function dbMigrate() {
       release();
     }
   } catch (error) {
-    console.error(error);
+    Log.error(error);
     return;
   }
 }

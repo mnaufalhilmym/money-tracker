@@ -20,6 +20,7 @@ import getAmount from "./_fetchData/getAmount";
 import Log from "@/util/log";
 import getCategory from "@/util/fetchData/getCategory";
 import getWallet from "@/util/fetchData/getWallet";
+import useDateNow from "@/hook/useDateNow";
 
 interface Picker<T> {
   isLoading: boolean;
@@ -46,8 +47,10 @@ const initialHomeData = {
 };
 
 export default function Home() {
+  const now = useDateNow();
+
   const datetimeFromOptions = useMemo(() => {
-    const now = new Date();
+    if (!now) return [];
 
     const oneWeekBefore = new Date(now);
     oneWeekBefore.setDate(now.getDate() - 7);
@@ -64,7 +67,7 @@ export default function Home() {
       { per: "month", name: "Last year", datetime: oneYearBefore },
       { per: "year", name: "All" },
     ];
-  }, []);
+  }, [now]);
 
   const [authData, setAuthData] = useState<{
     data?: AuthResponse;
@@ -79,7 +82,7 @@ export default function Home() {
   const [categoryPicker, setCategoryPicker] =
     useState<Picker<CategoryI>>(initialHomeData);
 
-  const [datetimeFrom, setDatetimeFrom] = useState(datetimeFromOptions[0]);
+  const [datetimeFrom, setDatetimeFrom] = useState<AmountDatetimeFrom>();
 
   const [amount, setAmount] = useState<AmountData>({
     isLoading: true,
@@ -114,6 +117,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!datetimeFromOptions.length) return;
+    setDatetimeFrom(datetimeFromOptions[0]);
+  }, [datetimeFromOptions]);
+
+  useEffect(() => {
     const abortController = new AbortController();
 
     getDataWalletPicker(abortController.signal);
@@ -137,7 +145,7 @@ export default function Home() {
     typePicker.active,
     walletPicker.active,
     categoryPicker.active,
-    datetimeFrom.datetime,
+    datetimeFrom,
   ]);
 
   useEffect(() => {
@@ -155,7 +163,7 @@ export default function Home() {
     walletPicker.data,
     categoryPicker.active,
     categoryPicker.data,
-    datetimeFrom.datetime,
+    datetimeFrom,
   ]);
 
   async function refreshData(abortSignal: AbortSignal) {
@@ -279,7 +287,7 @@ export default function Home() {
         { key: "p", value: walletPage && walletPage > 1 ? walletPage : 1 }
       );
 
-      if (datetimeFrom.datetime) {
+      if (datetimeFrom?.datetime) {
         filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
       }
 
@@ -341,7 +349,7 @@ export default function Home() {
         { key: "p", value: categoryPage && categoryPage > 1 ? categoryPage : 1 }
       );
 
-      if (datetimeFrom.datetime) {
+      if (datetimeFrom?.datetime) {
         filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
       }
 
@@ -373,12 +381,12 @@ export default function Home() {
     setAmount((prev) => ({ ...prev, isLoading: true }));
 
     const filterQueryParams: { key: string; value: string | number | Date }[] =
-      [
-        { key: "ft", value: typePicker.active.id },
-        { key: "per", value: datetimeFrom.per },
-      ];
+      [{ key: "ft", value: typePicker.active.id }];
 
-    if (datetimeFrom.datetime) {
+    if (datetimeFrom?.per) {
+      filterQueryParams.push({ key: "per", value: datetimeFrom.per });
+    }
+    if (datetimeFrom?.datetime) {
       filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
     }
 
@@ -432,7 +440,7 @@ export default function Home() {
       { key: "p", value: historyPage && historyPage > 1 ? historyPage : 1 },
     ];
 
-    if (datetimeFrom.datetime) {
+    if (datetimeFrom?.datetime) {
       filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
     }
 
@@ -509,7 +517,11 @@ export default function Home() {
       </div>
 
       <div className="mt-4">
-        <Graph datetimeFrom={datetimeFrom} graph={amount.graph} />
+        <Graph
+          isLoading={amount.isLoading}
+          datetimeFrom={datetimeFrom}
+          graph={amount.graph}
+        />
       </div>
 
       {!typePicker.isLoading ? (

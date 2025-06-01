@@ -6,7 +6,7 @@ interface Props {
   isOpen: boolean;
   close: () => void;
   datetimeFromOptions: AmountDatetimeFrom[];
-  datetimeFrom: AmountDatetimeFrom;
+  datetimeFrom?: AmountDatetimeFrom;
   setDatetimeFrom: (from: AmountDatetimeFrom) => void;
 }
 
@@ -37,7 +37,7 @@ export default function DatetimeFromPickerSheet(props: Readonly<Props>) {
           <PickerSelectButton
             key={`datetime_${dt.name}`}
             onClick={() => setDatetimeFrom(dt)}
-            isActive={props.datetimeFrom.name === dt.name}
+            isActive={props.datetimeFrom?.name === dt.name}
           >
             {dt.name}
           </PickerSelectButton>

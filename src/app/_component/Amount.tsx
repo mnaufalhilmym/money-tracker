@@ -6,7 +6,7 @@ interface Props {
   isLoading: boolean;
   data: AmountI;
   datetimeFromOptions: AmountDatetimeFrom[];
-  datetimeFrom: AmountDatetimeFrom;
+  datetimeFrom?: AmountDatetimeFrom;
   setDatetimeFrom: (from: AmountDatetimeFrom) => void;
 }
 
@@ -42,7 +42,7 @@ export default function Amount(props: Readonly<Props>) {
           onClick={() => setIsShowDatetimeFromPicker(true)}
           className="flex items-center justify-between gap-x-1.5 py-2 px-4 bg-white/20 text-white rounded-full border border-white/20 cursor-pointer"
         >
-          <span>{props.datetimeFrom.name}</span>
+          <span>{props.datetimeFrom?.name}</span>
           <ChevronDownIcon />
         </button>
       </div>
