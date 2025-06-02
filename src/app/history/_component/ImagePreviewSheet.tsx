@@ -9,7 +9,7 @@ interface Props {
 
 export default function ImagePreviewSheet(props: Readonly<Props>) {
   return (
-    <BottomSheet isOpen={props.isOpen} close={props.close}>
+    <BottomSheet isOpen={props.isOpen} close={props.close} zIndex={1}>
       <div className="min-h-0 flex-1 flex flex-col">
         <div className="flex items-center justify-between text-lg">
           <div className="w-6.5 h-6.5" />

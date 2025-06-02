@@ -1,6 +1,7 @@
 import ChevronDownIcon from "@/component/icon/ChevronDownIcon";
 import { useState } from "react";
 import DatetimeFromPickerSheet from "./DatetimeFromPickerSheet";
+import { formatRupiah } from "@/util/formatAmount";
 
 interface Props {
   isLoading: boolean;
@@ -25,7 +26,9 @@ export default function Amount(props: Readonly<Props>) {
               <div className="w-full h-7 bg-white/20 rounded animate-pulse" />
             </div>
           ) : (
-            <p className="font-bold text-2xl">{props.data.amount}</p>
+            <p className="font-bold text-2xl">
+              {formatRupiah(props.data.amount)}
+            </p>
           )}
 
           {props.isLoading ? (
@@ -33,7 +36,9 @@ export default function Amount(props: Readonly<Props>) {
               <div className="w-full h-3 bg-white/20 rounded animate-pulse" />
             </div>
           ) : (
-            <p className="text-xs">Avg {props.data.amount_average}</p>
+            <p className="text-xs">
+              Avg {formatRupiah(props.data.amount_average_per_day)}/day
+            </p>
           )}
         </div>
 

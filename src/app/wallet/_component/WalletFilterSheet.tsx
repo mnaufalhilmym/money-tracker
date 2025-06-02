@@ -28,7 +28,7 @@ export default function WalletFilterSheet(props: Readonly<Props>) {
   }
 
   return (
-    <BottomSheet isOpen={props.isOpen} close={props.close}>
+    <BottomSheet isOpen={props.isOpen} close={props.close} zIndex={1}>
       <p className="font-bold text-center text-lg">Choose Filter</p>
 
       <form onSubmit={onSubmit} className="mt-2 space-y-4">

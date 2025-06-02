@@ -2,6 +2,7 @@ import Button from "@/component/button/Button";
 import OpenIcon from "@/component/icon/OpenIcon";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
+import { formatRupiah } from "@/util/formatAmount";
 import toTitleCase from "@/util/titleCase";
 import Link from "next/link";
 import { useRef } from "react";
@@ -42,16 +43,20 @@ export default function Wallets(props: Readonly<Props>) {
           {props.data.map((d) => (
             <div
               key={`wallet_${d.id}`}
-              className="py-2.5 px-3.5 rounded-2xl bg-white/20 border border-white/20"
+              className="py-2.5 px-3.5 flex flex-col justify-between rounded-2xl bg-white/20 border border-white/20"
             >
               <p>{d.name}</p>
-              <div className="mt-1">
-                <div className="flex items-end gap-x-1.5">
-                  <p className="font-bold text-xl">{d.amount}</p>
-                  <p>({d.amount_percentage}%)</p>
-                </div>
-                <p className="text-xs">Avg {d.amount_average}</p>
+
+              <div className="mt-1 flex flex-wrap items-end gap-x-1.5">
+                <p className="font-bold text-xl">
+                  {formatRupiah(d.amount ?? 0)}
+                </p>
+                <p>({d.amount_percentage}%)</p>
               </div>
+
+              <p className="text-xs">
+                Avg {formatRupiah(d.amount_average_per_day ?? 0)}/day
+              </p>
             </div>
           ))}
         </div>
@@ -64,7 +69,7 @@ export default function Wallets(props: Readonly<Props>) {
       )}
 
       {props.isLoading && (
-        <div className="mt-4">
+        <div className="mt-4 py-1.5 border border-transparent">
           <Loading />
         </div>
       )}

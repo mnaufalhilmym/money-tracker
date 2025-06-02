@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     let querySql =
       "SELECT" +
       " COALESCE(SUM(h.amount), 0) amount," +
-      " COALESCE(ROUND(AVG(h.amount), 2), 0) amount_average" +
+      " COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime)), 0), 2), 0) amount_average_per_day" +
       " FROM history h" +
       " JOIN wallets w ON w.id = h.wallet_id" +
       " JOIN categories c ON c.id = h.category_id" +

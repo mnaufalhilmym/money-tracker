@@ -18,7 +18,7 @@ export async function selectCategory(
       ? ", COALESCE(ROUND(SUM(h.amount)*100.0/SUM(SUM(h.amount)) OVER(), 2), 0) amount_percentage"
       : "") +
     (calculateAmount
-      ? ", COALESCE(ROUND(AVG(h.amount), 2), 0) amount_average"
+      ? ", COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime)), 0), 2), 0) amount_average_per_day"
       : "") +
     " FROM categories c" +
     " JOIN types t ON t.id = c.type_id" +

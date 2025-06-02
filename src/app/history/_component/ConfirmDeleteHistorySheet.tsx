@@ -43,7 +43,7 @@ export default function ConfirmDeleteHistorySheet(props: Readonly<Props>) {
   }
 
   return (
-    <BottomSheet isOpen={props.isOpen} close={close}>
+    <BottomSheet isOpen={props.isOpen} close={close} zIndex={1}>
       <p className="font-bold text-center text-lg">Delete History</p>
 
       <p className="mt-2">

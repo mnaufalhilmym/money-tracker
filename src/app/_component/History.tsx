@@ -2,6 +2,7 @@ import Button from "@/component/button/Button";
 import OpenIcon from "@/component/icon/OpenIcon";
 import Loading from "@/component/loading/Loading";
 import NotFound from "@/component/notFound/NotFound";
+import { formatRupiah } from "@/util/formatAmount";
 import toTitleCase from "@/util/titleCase";
 import Link from "next/link";
 import { useRef } from "react";
@@ -37,7 +38,7 @@ export default function History(props: Readonly<Props>) {
         </Link>
       </div>
 
-      {!props.isLoading && !!props.data.length && (
+      {!!props.data.length && (
         <div className="mt-2 space-y-2.5">
           {props.data.map((d) => (
             <div
@@ -57,9 +58,9 @@ export default function History(props: Readonly<Props>) {
                 </div>
               </div>
               <div>
-                <p className="font-bold">
+                <p className="font-bold whitespace-nowrap">
                   {d.type_amount_prefix}
-                  {d.amount}
+                  {formatRupiah(d.amount ?? 0)}
                 </p>
               </div>
             </div>
@@ -74,13 +75,13 @@ export default function History(props: Readonly<Props>) {
       )}
 
       {props.isLoading && (
-        <div className="mt-4">
+        <div className="mt-4 py-1.5 border border-transparent">
           <Loading />
         </div>
       )}
 
       {!props.isLoading && !!props.data.length && props.canLoadMore && (
-        <div className="mt-3">
+        <div className="mt-4">
           <Button type="button" onClick={onClickSeeMore}>
             See more
           </Button>

@@ -17,6 +17,7 @@ import getCategories from "@/util/fetchData/getCategories";
 import apiGetHistory from "@/util/fetchData/getHistory";
 import Log from "@/util/log";
 import useDateNow from "@/hook/useDateNow";
+import { formatRupiah } from "@/util/formatAmount";
 
 async function getHistory(
   abortSignal: AbortSignal,
@@ -299,60 +300,54 @@ export default function History() {
       </div>
 
       <div className="mt-4 space-y-4">
-        {!history.isLoading ? (
-          <>
-            {[...groupedHistories].map(([dateKey, items]) => (
-              <div key={dateKey}>
-                <p className="font-bold text-lg">{dateKey}</p>
-                <div className="mt-2 space-y-2.5">
-                  {items.map((i) => (
-                    <button
-                      key={i.id}
-                      onClick={() => setEditHistory(history.data[i.idx])}
-                      className="w-full flex items-center gap-x-2 text-left cursor-pointer"
-                    >
-                      <div
-                        className="w-8 h-8 rounded-full"
-                        style={{ backgroundColor: i.category_color }}
-                      />
+        {[...groupedHistories].map(([dateKey, items]) => (
+          <div key={dateKey}>
+            <p className="font-bold text-lg">{dateKey}</p>
+            <div className="mt-2 space-y-2.5">
+              {items.map((i) => (
+                <button
+                  key={i.id}
+                  onClick={() => setEditHistory(history.data[i.idx])}
+                  className="w-full flex items-center gap-x-2 text-left cursor-pointer"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full"
+                    style={{ backgroundColor: i.category_color }}
+                  />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-x-2 justify-between">
-                          <div>
-                            <p className="font-bold">{i.description}</p>
-                            <p className="text-xs text-white/70">
-                              {i.datetime}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold">
-                              {i.type_amount_prefix}
-                              {i.amount}
-                            </p>
-                            <p className="text-xs text-white/70">
-                              {i.wallet_name} - {i.category_name}
-                            </p>
-                          </div>
-                        </div>
-                        {i.location_name && i.location_display_name && (
-                          <div>
-                            <p className="text-xs text-white/70 truncate">
-                              {i.location_name} • {i.location_display_name}
-                            </p>
-                          </div>
-                        )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-x-2 justify-between">
+                      <div>
+                        <p className="font-bold">{i.description}</p>
+                        <p className="text-xs text-white/70">{i.datetime}</p>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+                      <div className="text-right">
+                        <p className="font-bold whitespace-nowrap">
+                          {i.type_amount_prefix}
+                          {formatRupiah(i.amount ?? 0)}
+                        </p>
+                        <p className="text-xs text-white/70">
+                          {i.wallet_name} - {i.category_name}
+                        </p>
+                      </div>
+                    </div>
+                    {i.location_name && i.location_display_name && (
+                      <div>
+                        <p className="text-xs text-white/70 truncate">
+                          {i.location_name} • {i.location_display_name}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
-            {!groupedHistories.size && <NotFound />}
-          </>
-        ) : (
-          <Loading />
-        )}
+        {!history.isLoading && !groupedHistories.size && <NotFound />}
+
+        {history.isLoading && <Loading />}
 
         <div ref={loadMoreRef} />
       </div>

@@ -14,12 +14,14 @@ import useDebounce from "@/hook/useDebounce";
 import getTypes from "@/util/fetchData/getTypes";
 import apiGetWallets from "@/util/fetchData/getWallets";
 import Log from "@/util/log";
+import toTitleCase from "@/util/titleCase";
 
 async function getWallets(
   abortSignal: AbortSignal,
   params?: { search?: string; filter?: number[]; page?: number }
 ) {
   const queryParams: { key: string; value: string | number }[] = [
+    { key: "st", value: 1 },
     { key: "l", value: 20 },
     { key: "p", value: params?.page && params.page > 1 ? params.page : 1 },
   ];
@@ -59,13 +61,30 @@ export default function Wallets() {
   const [search, setSearch] = useState("");
   const debounceSearch = useDebounce(search, 500);
 
-  const spendingWallets = useMemo(() => {
-    return wallets.data.filter((w) => w.type_id === 1);
-  }, [wallets.data]);
+  const groupedWallets = useMemo(() => {
+    if (!wallets.data.length) return [];
 
-  const savingWallets = useMemo(() => {
-    return wallets.data.filter((w) => w.type_id === 2);
-  }, [wallets.data]);
+    const data: {
+      typeId: number;
+      formattedTypeName: string;
+      data: WalletI[];
+    }[] = [];
+
+    for (const wallet of wallets.data) {
+      const group = data.find((d) => d.typeId === wallet.type_id);
+      if (group) {
+        group.data.push(wallet);
+      } else {
+        data.push({
+          typeId: wallet.type_id!,
+          formattedTypeName: toTitleCase(wallet.type_name!),
+          data: [wallet],
+        });
+      }
+    }
+
+    return data;
+  }, [types, wallets.data]);
 
   useEffect(() => {
     resetTypes();
@@ -185,47 +204,26 @@ export default function Wallets() {
       </div>
 
       <div className="mt-4 space-y-4">
-        {!wallets.isLoading ? (
-          <>
-            {!!spendingWallets.length && (
-              <div>
-                <p className="font-bold text-lg">Spending</p>
-                <div className="mt-2 space-y-2.5">
-                  {spendingWallets.map((w) => (
-                    <button
-                      key={w.id}
-                      onClick={() => setEditWallet(w)}
-                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg cursor-pointer"
-                    >
-                      <p>{w.name}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+        {groupedWallets.map((gw) => (
+          <div key={`grouped_wallet_${gw.typeId}`}>
+            <p className="font-bold text-lg">{gw.formattedTypeName}</p>
+            <div className="mt-2 space-y-2.5">
+              {gw.data.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => setEditWallet(w)}
+                  className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg cursor-pointer"
+                >
+                  <p>{w.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
-            {!!savingWallets.length && (
-              <div>
-                <p className="font-bold text-lg">Saving</p>
-                <div className="mt-2 space-y-2.5">
-                  {savingWallets.map((w) => (
-                    <button
-                      key={w.id}
-                      onClick={() => setEditWallet(w)}
-                      className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg cursor-pointer"
-                    >
-                      <p>{w.name}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+        {!wallets.isLoading && !groupedWallets.length && <NotFound />}
 
-            {!spendingWallets.length && !savingWallets.length && <NotFound />}
-          </>
-        ) : (
-          <Loading />
-        )}
+        {wallets.isLoading && <Loading />}
 
         <div ref={loadMoreRef} />
       </div>

@@ -39,7 +39,7 @@ export default function ConfirmDeleteWalletSheet(props: Readonly<Props>) {
   }
 
   return (
-    <BottomSheet isOpen={props.isOpen} close={close}>
+    <BottomSheet isOpen={props.isOpen} close={close} zIndex={1}>
       <p className="font-bold text-center text-lg">Delete Wallet</p>
 
       <p className="mt-2">

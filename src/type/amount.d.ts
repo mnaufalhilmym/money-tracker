@@ -1,6 +1,6 @@
 interface AmountI {
   amount: number;
-  amount_average: number;
+  amount_average_per_day: number;
 }
 
 interface AmountDatetimeFrom {

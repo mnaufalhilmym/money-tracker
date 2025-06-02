@@ -1,3 +1,5 @@
+# Build Command: docker build . --build-arg BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) -t registry.hilmy.dev/tools-money-tracker
+
 # Stage 1: Builder
 FROM node:22 AS builder
 
@@ -11,6 +13,10 @@ RUN npm ci
 COPY . .
 COPY .env.prd .env
 
+# Inject build time as env variable
+ARG BUILD_TIME
+ENV NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME
+
 # Build — environment variables will be embedded into the app
 RUN npm run build
 
@@ -22,7 +28,6 @@ WORKDIR /app
 # Copy standalone server and all required files
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
 
 # Set env vars and expose port
 ENV NODE_ENV=production

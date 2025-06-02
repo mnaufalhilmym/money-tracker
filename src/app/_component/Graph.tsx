@@ -1,6 +1,7 @@
 "use client";
 
 import useDateNow from "@/hook/useDateNow";
+import { formatRupiah } from "@/util/formatAmount";
 import { useEffect, useMemo, useState } from "react";
 
 interface Props {
@@ -19,15 +20,22 @@ export default function Graph(props: Readonly<Props>) {
     if (props.datetimeFrom?.datetime) {
       d = new Date(props.datetimeFrom.datetime);
     }
-    if (props.graph.length && props.graph[0].key.getTime() < d.getTime()) {
-      d = new Date(props.graph[0].key);
+    if (props.graph.length) {
+      const k = props.graph[0].key;
+      if (k.getTime() < d.getTime()) {
+        d = new Date(k);
+      } else {
+        d.setHours(
+          k.getHours(),
+          k.getMinutes(),
+          k.getSeconds(),
+          k.getMilliseconds()
+        );
+      }
     }
 
     switch (props.datetimeFrom?.per) {
       case "day": {
-        const startOfDay = new Date(d);
-        startOfDay.setHours(0, 0, 0, 0);
-        d = startOfDay;
         break;
       }
       case "week": {
@@ -35,17 +43,32 @@ export default function Graph(props: Readonly<Props>) {
         const diffToMonday = day === 0 ? -6 : 1 - day;
         const startOfWeek = new Date(d);
         startOfWeek.setDate(d.getDate() + diffToMonday);
-        startOfWeek.setHours(0, 0, 0, 0);
         d = startOfWeek;
         break;
       }
       case "month": {
-        const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+        const startOfMonth = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          1,
+          d.getHours(),
+          d.getMinutes(),
+          d.getSeconds(),
+          d.getMilliseconds()
+        );
         d = startOfMonth;
         break;
       }
       default: {
-        const startOfYear = new Date(d.getFullYear(), 0, 1);
+        const startOfYear = new Date(
+          d.getFullYear(),
+          0,
+          1,
+          d.getHours(),
+          d.getMinutes(),
+          d.getSeconds(),
+          d.getMilliseconds()
+        );
         d = startOfYear;
       }
     }
@@ -63,12 +86,12 @@ export default function Graph(props: Readonly<Props>) {
       }
 
       const key = new Date(d);
-      const percentage = (value * 100) / totalValue;
       const newGraph = {
         key,
         value,
         x: "",
-        percentage: isNaN(percentage) ? 0 : percentage.toFixed(2),
+        percentage:
+          totalValue > 0 ? ((value * 100) / totalValue).toFixed(2) : 0,
       };
 
       switch (props.datetimeFrom?.per) {
@@ -77,12 +100,13 @@ export default function Graph(props: Readonly<Props>) {
           newGraph.x = `${key.getDate()}`;
           break;
         case "week":
-          d.setDate(d.getDate() + 7);
+          d.setDate(d.getDate() + 6);
           newGraph.x = `${key.getDate()}${key.toLocaleString("en-US", {
             month: "short",
           })} - ${d.getDate()}${d.toLocaleString("en-US", {
             month: "short",
           })}`;
+          d.setDate(d.getDate() + 1);
           break;
         case "month":
           d.setMonth(d.getMonth() + 1);
@@ -128,7 +152,7 @@ export default function Graph(props: Readonly<Props>) {
       }`}
     >
       {!props.isLoading &&
-        graph.data.map((g) => (
+        graph.data.map((g, idx) => (
           <div
             key={g.key.toISOString()}
             className="min-w-8 w-full h-full flex flex-col justify-end"
@@ -141,8 +165,14 @@ export default function Graph(props: Readonly<Props>) {
               }}
             >
               {selectedKey && selectedKey.getTime() === g.key.getTime() && (
-                <div className="absolute -top-12.5 right-0 py-1 px-2 bg-white text-black text-right rounded-l-lg rounded-tr-lg">
-                  <p className="font-bold">{g.value}</p>
+                <div
+                  className={`absolute z-1 -top-12.5 ${
+                    idx >= graph.data.length / 2
+                      ? "right-0 rounded-l-lg rounded-tr-lg"
+                      : "left-0 rounded-r-lg rounded-tl-lg"
+                  } py-1 px-2 bg-white text-black text-right border border-black/30 shadow-md`}
+                >
+                  <p className="font-bold">{formatRupiah(g.value)}</p>
                   <p className="text-xs">{g.percentage}%</p>
                 </div>
               )}

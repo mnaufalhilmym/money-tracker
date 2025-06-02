@@ -86,7 +86,7 @@ export default function Home() {
 
   const [amount, setAmount] = useState<AmountData>({
     isLoading: true,
-    data: { amount: 0, amount_average: 0 },
+    data: { amount: 0, amount_average_per_day: 0 },
     graph: [],
   });
 
@@ -371,7 +371,7 @@ export default function Home() {
   async function refreshAmount(abortSignal: AbortSignal) {
     if (!typePicker.active) {
       setAmount({
-        data: { amount: 0, amount_average: 0 },
+        data: { amount: 0, amount_average_per_day: 0 },
         graph: [],
         isLoading: false,
       });

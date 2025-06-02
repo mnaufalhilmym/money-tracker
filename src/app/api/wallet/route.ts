@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const calculateAmount = !!searchParams.get("a");
+    const sortTypeFirst = !!searchParams.get("st");
     const search = searchParams.get("s");
     const filterDatetimeFrom = searchParams.get("dtf");
     const filterTypes = searchParams.getAll("ft");
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
         ? ", COALESCE(ROUND(SUM(h.amount)*100.0/SUM(SUM(h.amount)) OVER(), 2), 0) amount_percentage"
         : "") +
       (calculateAmount
-        ? ", COALESCE(ROUND(AVG(h.amount), 2), 0) amount_average"
+        ? ", COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime)), 0), 2), 0) amount_average_per_day"
         : "") +
       " FROM wallets w" +
       " JOIN types t ON t.id = w.type_id" +
@@ -73,7 +74,11 @@ export async function GET(request: NextRequest) {
     const queryTotalParams = [...queryParams];
     const queryTotalSql = `SELECT COUNT(1) total FROM (${querySql})`;
 
-    querySql += " ORDER BY w.name ASC";
+    querySql += " ORDER BY";
+    if (sortTypeFirst) {
+      querySql += " t.id ASC,";
+    }
+    querySql += " w.name ASC";
 
     if (!(!isNaN(limit) && limit > 0)) {
       limit = 30;

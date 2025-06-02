@@ -132,7 +132,7 @@ export default function BottomSheet(props: Readonly<Props>) {
       className={`fixed left-0 right-0 bottom-0 top-0 max-w-md mx-auto transition-colors ${
         props.isOpen ? "bg-black/60" : "bg-black/0"
       } ${isShow ? "visible" : "invisible"}`}
-      style={{ zIndex: props.zIndex ?? 1 }}
+      style={{ zIndex: props.zIndex }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
