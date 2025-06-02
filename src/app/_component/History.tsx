@@ -1,0 +1,92 @@
+import Button from "@/component/button/Button";
+import OpenIcon from "@/component/icon/OpenIcon";
+import Loading from "@/component/loading/Loading";
+import NotFound from "@/component/notFound/NotFound";
+import { formatRupiah } from "@/util/formatAmount";
+import toTitleCase from "@/util/titleCase";
+import Link from "next/link";
+import { useRef } from "react";
+
+interface Props {
+  typeName: string;
+  isLoading?: boolean;
+  canLoadMore?: boolean;
+  data: HistoryI[];
+  getHistory: (abortSignal: AbortSignal) => Promise<void>;
+}
+
+export default function History(props: Readonly<Props>) {
+  const abortController = useRef<AbortController>(null);
+
+  async function onClickSeeMore(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) {
+    e.stopPropagation();
+
+    abortController.current?.abort();
+    abortController.current = new AbortController();
+
+    await props.getHistory(abortController.current.signal);
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between font-bold">
+        <p className="text-lg">{toTitleCase(props.typeName)} History</p>
+        <Link href="/history" className="text-xl">
+          <OpenIcon />
+        </Link>
+      </div>
+
+      {!!props.data.length && (
+        <div className="mt-2 space-y-2.5">
+          {props.data.map((d) => (
+            <div
+              key={`history_${d.id}`}
+              className="flex items-center gap-x-2 justify-between"
+            >
+              <div className="flex items-center gap-x-2">
+                <div
+                  className="w-8 h-8 rounded-full"
+                  style={{ backgroundColor: d.category_color }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold">{d.description}</p>
+                  <p className="text-xs text-white/70">
+                    {new Date(d.datetime!).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="font-bold whitespace-nowrap">
+                  {d.type_amount_prefix}
+                  {formatRupiah(d.amount ?? 0)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!props.isLoading && !props.data.length && (
+        <div className="mt-4">
+          <NotFound />
+        </div>
+      )}
+
+      {props.isLoading && (
+        <div className="mt-4 py-1.5 border border-transparent">
+          <Loading />
+        </div>
+      )}
+
+      {!props.isLoading && !!props.data.length && props.canLoadMore && (
+        <div className="mt-4">
+          <Button type="button" onClick={onClickSeeMore}>
+            See more
+          </Button>
+        </div>
+      )}
+    </>
+  );
+}

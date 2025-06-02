@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+.input-no-spinner::-webkit-outer-spin-button,
+.input-no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.input-no-spinner {
+  -moz-appearance: textfield;
+}
+
+.scrollable::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: darkgray;
+  border-radius: 4px;
+}
+
+.calendar-picker-color-invert::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* Inverts the icon color */
+  cursor: pointer;
+}
