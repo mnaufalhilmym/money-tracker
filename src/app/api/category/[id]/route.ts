@@ -19,13 +19,17 @@ export async function GET(
     const { searchParams } = new URL(request.url);
 
     const calculateAmount = !!searchParams.get("a");
+    const filterDatetimeFrom = searchParams.get("dtf");
+    const filterWallets = searchParams.getAll("fw");
 
     await dbMigrate();
 
     const category = await selectCategory(
       id,
       tokenData.userId,
-      calculateAmount
+      calculateAmount,
+      filterDatetimeFrom,
+      filterWallets
     );
 
     return NextResponse.json(category.rows[0]);

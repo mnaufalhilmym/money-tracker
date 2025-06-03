@@ -41,8 +41,9 @@ export async function GET(request: NextRequest) {
         : "") +
       " FROM categories c" +
       " JOIN types t ON t.id = c.type_id" +
-      (calculateAmount || filterWallets.length
-        ? " LEFT JOIN history h ON h.category_id = c.id"
+      (calculateAmount || filterWallets.length || filterDatetimeFrom
+        ? " LEFT JOIN history h ON h.category_id = c.id" +
+          (filterDatetimeFrom ? " AND h.datetime >= $2" : "")
         : "") +
       (filterWallets.length
         ? " LEFT JOIN wallets w ON w.id = h.wallet_id"
@@ -50,14 +51,13 @@ export async function GET(request: NextRequest) {
       " WHERE c.deleted_at IS NULL AND c.user_id = $1";
     const queryParams: any[] = [tokenData.userId];
 
+    if (filterDatetimeFrom) {
+      queryParams.push(filterDatetimeFrom);
+    }
+
     if (search) {
       queryParams.push(`%${search}%`);
       querySql += ` AND c.name ILIKE $${queryParams.length}`;
-    }
-
-    if (calculateAmount && filterDatetimeFrom) {
-      queryParams.push(filterDatetimeFrom);
-      querySql += ` AND h.datetime >= $${queryParams.length}`;
     }
 
     queryParams.push(filterTypes);

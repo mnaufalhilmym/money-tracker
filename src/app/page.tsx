@@ -262,6 +262,14 @@ export default function Home() {
         { key: "a", value: 1 },
       ];
 
+      if (categoryPicker.active) {
+        filterQueryParams.push({ key: "fc", value: categoryPicker.active.id });
+      }
+
+      if (datetimeFrom?.datetime) {
+        filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
+      }
+
       if (walletPicker.active) {
         const wallet = await getWallet(
           walletPicker.active.id,
@@ -277,19 +285,11 @@ export default function Home() {
         return;
       }
 
-      if (categoryPicker.active) {
-        filterQueryParams.push({ key: "fc", value: categoryPicker.active.id });
-      }
-
       filterQueryParams.push(
         { key: "ft", value: typePicker.active.id },
         { key: "l", value: 4 },
         { key: "p", value: walletPage && walletPage > 1 ? walletPage : 1 }
       );
-
-      if (datetimeFrom?.datetime) {
-        filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
-      }
 
       const wallets = await getWallets(filterQueryParams, abortSignal);
       setWallet((prev) => ({
@@ -324,6 +324,14 @@ export default function Home() {
         { key: "a", value: 1 },
       ];
 
+      if (walletPicker.active) {
+        filterQueryParams.push({ key: "fw", value: walletPicker.active.id });
+      }
+
+      if (datetimeFrom?.datetime) {
+        filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
+      }
+
       if (categoryPicker.active) {
         const category = await getCategory(
           categoryPicker.active.id,
@@ -339,19 +347,11 @@ export default function Home() {
         return;
       }
 
-      if (walletPicker.active) {
-        filterQueryParams.push({ key: "fw", value: walletPicker.active.id });
-      }
-
       filterQueryParams.push(
         { key: "ft", value: typePicker.active.id },
         { key: "l", value: 4 },
         { key: "p", value: categoryPage && categoryPage > 1 ? categoryPage : 1 }
       );
-
-      if (datetimeFrom?.datetime) {
-        filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
-      }
 
       const categories = await getCategories(filterQueryParams, abortSignal);
       setCategory((prev) => ({
@@ -390,13 +390,21 @@ export default function Home() {
       filterQueryParams.push({ key: "dtf", value: datetimeFrom.datetime });
     }
 
-    walletPicker.data.forEach((w) => {
-      filterQueryParams.push({ key: "fw", value: w.id! });
-    });
+    if (walletPicker.active) {
+      filterQueryParams.push({ key: "fw", value: walletPicker.active.id });
+    } else {
+      walletPicker.data.forEach((w) => {
+        filterQueryParams.push({ key: "fw", value: w.id! });
+      });
+    }
 
-    categoryPicker.data.forEach((c) => {
-      filterQueryParams.push({ key: "fc", value: c.id! });
-    });
+    if (categoryPicker.active) {
+      filterQueryParams.push({ key: "fc", value: categoryPicker.active.id });
+    } else {
+      categoryPicker.data.forEach((c) => {
+        filterQueryParams.push({ key: "fc", value: c.id! });
+      });
+    }
 
     try {
       const amount = await getAmount(filterQueryParams, abortSignal);

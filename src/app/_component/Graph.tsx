@@ -2,7 +2,7 @@
 
 import useDateNow from "@/hook/useDateNow";
 import { formatRupiah } from "@/util/formatAmount";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   isLoading: boolean;
@@ -10,11 +10,39 @@ interface Props {
   graph: { key: Date; value: number }[];
 }
 
+interface Graph {
+  data: {
+    key: Date;
+    value: number;
+    x: string;
+    percentage: string | number;
+  }[];
+  maxValue: number;
+}
+
 export default function Graph(props: Readonly<Props>) {
   const now = useDateNow();
 
-  const graph = useMemo(() => {
-    if (!now) return { data: [], maxValue: 0 };
+  const [selectedKey, setSelectedKey] = useState<Date>();
+  const [graph, setGraph] = useState<Graph>({
+    data: [],
+    maxValue: 0,
+  });
+  const [isLoading, setIsLoading] = useState(props.isLoading);
+
+  useEffect(() => {
+    if (props.isLoading) {
+      setIsLoading(true);
+    }
+  }, [props.isLoading]);
+
+  useEffect(() => {
+    if (!now) {
+      setGraph({ data: [], maxValue: 0 });
+      return;
+    }
+
+    setIsLoading(true);
 
     let d = new Date(now);
     if (props.datetimeFrom?.datetime) {
@@ -120,10 +148,9 @@ export default function Graph(props: Readonly<Props>) {
       g.push(newGraph);
     }
 
-    return { data: g, maxValue };
+    setGraph({ data: g, maxValue });
+    setIsLoading(false);
   }, [now, props.datetimeFrom, props.graph]);
-
-  const [selectedKey, setSelectedKey] = useState<Date>();
 
   useEffect(() => {
     if (!graph.data.length) return;
@@ -146,12 +173,12 @@ export default function Graph(props: Readonly<Props>) {
   return (
     <div
       className={`h-71.5 ${
-        props.isLoading
+        isLoading
           ? "bg-white/20 rounded animate-pulse"
           : "flex gap-x-2 pt-14 overflow-x-auto scrollable"
       }`}
     >
-      {!props.isLoading &&
+      {!isLoading &&
         graph.data.map((g, idx) => (
           <div
             key={g.key.toISOString()}
@@ -167,7 +194,7 @@ export default function Graph(props: Readonly<Props>) {
               {selectedKey && selectedKey.getTime() === g.key.getTime() && (
                 <div
                   className={`absolute z-1 -top-12.5 ${
-                    idx >= graph.data.length / 2
+                    idx >= Math.floor(graph.data.length / 2)
                       ? "right-0 rounded-l-lg rounded-tr-lg"
                       : "left-0 rounded-r-lg rounded-tl-lg"
                   } py-1 px-2 bg-white text-black text-right border border-black/30 shadow-md`}

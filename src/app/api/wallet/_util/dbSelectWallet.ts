@@ -3,8 +3,11 @@ import pool from "../../_lib/db/db";
 export async function selectWallet(
   id: string,
   userId: string,
-  calculateAmount?: boolean
+  calculateAmount?: boolean,
+  filterDatetimeFrom?: string | null,
+  filterCategories?: string[]
 ) {
+  const queryParams: any[] = [];
   let querySql =
     "SELECT" +
     " w.id id," +
@@ -20,10 +23,25 @@ export async function selectWallet(
       ? ", COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime)), 0), 2), 0) amount_average_per_day"
       : "") +
     " FROM wallets w" +
-    " JOIN types t ON t.id = w.type_id" +
-    (calculateAmount ? " LEFT JOIN history h ON h.wallet_id = w.id" : "") +
-    " WHERE w.deleted_at IS NULL AND w.id = $1 AND w.user_id = $2";
-  const queryParams: any[] = [id, userId];
+    " JOIN types t ON t.id = w.type_id";
+
+  if (calculateAmount || filterCategories?.length || filterDatetimeFrom) {
+    querySql += " LEFT JOIN history h ON h.wallet_id = w.id";
+    if (filterDatetimeFrom) {
+      queryParams.push(filterDatetimeFrom);
+      querySql += ` AND h.datetime >= $${queryParams.length}`;
+    }
+    if (filterCategories?.length) {
+      queryParams.push(filterCategories);
+      querySql += ` AND h.category_id = ANY($${queryParams.length})`;
+    }
+  }
+
+  querySql += " WHERE w.deleted_at IS NULL";
+  queryParams.push(id);
+  querySql += ` AND w.id = $${queryParams.length}`;
+  queryParams.push(userId);
+  querySql += ` AND w.user_id = $${queryParams.length}`;
 
   if (calculateAmount) {
     querySql += " GROUP BY w.id, t.id";

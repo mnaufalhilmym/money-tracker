@@ -19,10 +19,18 @@ export async function GET(
     const { searchParams } = new URL(request.url);
 
     const calculateAmount = !!searchParams.get("a");
+    const filterDatetimeFrom = searchParams.get("dtf");
+    const filterCategories = searchParams.getAll("fc");
 
     await dbMigrate();
 
-    const wallet = await selectWallet(id, tokenData.userId, calculateAmount);
+    const wallet = await selectWallet(
+      id,
+      tokenData.userId,
+      calculateAmount,
+      filterDatetimeFrom,
+      filterCategories
+    );
 
     return NextResponse.json(wallet.rows[0]);
   } catch (error) {
