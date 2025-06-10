@@ -1,7 +1,6 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import dbMigrate from "../../_lib/db/migrate";
 import pool from "../../_lib/db/db";
 import { createReadStream } from "fs";
 import Log from "@/util/log";
@@ -16,8 +15,6 @@ export async function GET(
     const tokenData = await processToken(token);
 
     const { id } = await params;
-
-    await dbMigrate();
 
     const image = await pool.query<ImageI>(
       "SELECT" +

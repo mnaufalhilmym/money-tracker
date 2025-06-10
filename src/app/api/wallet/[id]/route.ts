@@ -3,7 +3,6 @@ import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "../../_lib/db/db";
 import { selectWallet } from "../_util/dbSelectWallet";
-import dbMigrate from "../../_lib/db/migrate";
 import Log from "@/util/log";
 
 export async function GET(
@@ -15,6 +14,8 @@ export async function GET(
   try {
     const tokenData = await processToken(token);
 
+    const clientTimezone = request.headers.get("x-time-zone");
+
     const { id } = await params;
     const { searchParams } = new URL(request.url);
 
@@ -22,11 +23,10 @@ export async function GET(
     const filterDatetimeFrom = searchParams.get("dtf");
     const filterCategories = searchParams.getAll("fc");
 
-    await dbMigrate();
-
     const wallet = await selectWallet(
       id,
       tokenData.userId,
+      clientTimezone,
       calculateAmount,
       filterDatetimeFrom,
       filterCategories
@@ -56,8 +56,6 @@ export async function PUT(
     const { id } = await params;
 
     const { name, type_id } = await request.json();
-
-    await dbMigrate();
 
     const client = await pool.connect();
 
@@ -107,8 +105,6 @@ export async function DELETE(
     const tokenData = await processToken(token);
 
     const { id } = await params;
-
-    await dbMigrate();
 
     await pool.query(
       "UPDATE wallets SET deleted_at = NOW() WHERE id = $1 AND user_id = $2",

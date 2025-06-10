@@ -9,7 +9,6 @@ import { insertImagesTx } from "./_util/dbInsertImages";
 import { insertHistoryImagesTx } from "./_util/dbInsertHistoryImages";
 import { selectHistoryTx } from "./_util/dbSelectHistory";
 import { validateCategoryId, validateWalletId } from "./_util/validation";
-import dbMigrate from "../_lib/db/migrate";
 import Log from "@/util/log";
 
 export async function GET(request: NextRequest) {
@@ -27,8 +26,6 @@ export async function GET(request: NextRequest) {
     const filterCategories = searchParams.getAll("fc");
     let limit = Number(searchParams.get("l"));
     let page = Number(searchParams.get("p"));
-
-    await dbMigrate();
 
     let querySql =
       "SELECT" +
@@ -126,6 +123,8 @@ export async function POST(request: NextRequest) {
   try {
     const tokenData = await processToken(token);
 
+    const clientTimezone = request.headers.get("x-time-zone");
+
     const { fields, files } = await parseFormData(request);
 
     const {
@@ -159,10 +158,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await dbMigrate();
-
-    await validateWalletId(tokenData.userId, wallet_id?.[0]);
-    await validateCategoryId(tokenData.userId, category_id?.[0]);
+    await validateWalletId(clientTimezone, tokenData.userId, wallet_id?.[0]);
+    await validateCategoryId(
+      clientTimezone,
+      tokenData.userId,
+      category_id?.[0]
+    );
 
     const client = await pool.connect();
 

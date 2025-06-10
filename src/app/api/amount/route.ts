@@ -1,7 +1,6 @@
 import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
-import dbMigrate from "../_lib/db/migrate";
 import pool from "../_lib/db/db";
 import Log from "@/util/log";
 
@@ -10,6 +9,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokenData = await processToken(token);
+
+    const clientTimezone = request.headers.get("x-time-zone");
 
     const { searchParams } = new URL(request.url);
 
@@ -21,8 +22,6 @@ export async function GET(request: NextRequest) {
     const filterTypes = searchParams.getAll("ft");
     const filterWallets = searchParams.getAll("fw");
     const filterCategories = searchParams.getAll("fc");
-
-    await dbMigrate();
 
     let dateTrunc;
 
@@ -42,25 +41,25 @@ export async function GET(request: NextRequest) {
 
     let queryPerSql =
       "SELECT" +
-      ` DATE_TRUNC('${dateTrunc}', h.datetime)::DATE key,` +
+      ` DATE_TRUNC('${dateTrunc}', h.datetime AT TIME ZONE $1)::DATE key,` +
       " SUM(h.amount) value" +
       " FROM history h" +
       " JOIN wallets w ON w.id = h.wallet_id" +
       " JOIN categories c ON c.id = h.category_id" +
       " JOIN types t ON t.id = c.type_id" +
-      " WHERE h.user_id = $1";
-    const queryPerParams: any[] = [tokenData.userId];
+      " WHERE h.user_id = $2";
+    const queryPerParams: any[] = [clientTimezone, tokenData.userId];
 
     let querySql =
       "SELECT" +
       " COALESCE(SUM(h.amount), 0) amount," +
-      " COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime)), 0), 2), 0) amount_average_per_day" +
+      " COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime AT TIME ZONE $1)), 0), 2), 0) amount_average_per_day" +
       " FROM history h" +
       " JOIN wallets w ON w.id = h.wallet_id" +
       " JOIN categories c ON c.id = h.category_id" +
       " JOIN types t ON t.id = c.type_id" +
-      " WHERE h.user_id = $1";
-    const queryParams: any[] = [tokenData.userId];
+      " WHERE h.user_id = $2";
+    const queryParams: any[] = [clientTimezone, tokenData.userId];
 
     if (filterDatetimeFromStr) {
       const filterDatetimeFrom = new Date(filterDatetimeFromStr);

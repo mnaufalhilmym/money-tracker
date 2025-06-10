@@ -2,7 +2,6 @@ import getTokenCookie from "@/util/api/getTokenCookie";
 import processToken from "@/util/api/processToken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "../_lib/db/db";
-import dbMigrate from "../_lib/db/migrate";
 import Log from "@/util/log";
 
 export async function GET(request: NextRequest) {
@@ -10,6 +9,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokenData = await processToken(token);
+
+    const clientTimezone = request.headers.get("x-time-zone");
 
     const { searchParams } = new URL(request.url);
 
@@ -22,37 +23,40 @@ export async function GET(request: NextRequest) {
     let limit = Number(searchParams.get("l"));
     let page = Number(searchParams.get("p"));
 
-    await dbMigrate();
-
+    const queryParams: any[] = [];
     let querySql =
       "SELECT" +
       " w.id id," +
       " w.user_id user_id," +
       " w.name name," +
       " t.id type_id," +
-      " t.name type_name" +
-      (calculateAmount ? ", COALESCE(SUM(h.amount), 0) amount" : "") +
-      (calculateAmount
-        ? ", COALESCE(ROUND(SUM(h.amount)*100.0/SUM(SUM(h.amount)) OVER(), 2), 0) amount_percentage"
-        : "") +
-      (calculateAmount
-        ? ", COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime)), 0), 2), 0) amount_average_per_day"
-        : "") +
-      " FROM wallets w" +
-      " JOIN types t ON t.id = w.type_id" +
-      (calculateAmount || filterCategories.length || filterDatetimeFrom
-        ? " LEFT JOIN history h ON h.wallet_id = w.id" +
-          (filterDatetimeFrom ? "  AND h.datetime >= $2" : "")
-        : "") +
-      (filterCategories.length
-        ? " LEFT JOIN categories c ON c.id = h.category_id"
-        : "") +
-      " WHERE w.deleted_at IS NULL AND w.user_id = $1";
-    const queryParams: any[] = [tokenData.userId];
+      " t.name type_name";
 
-    if (filterDatetimeFrom) {
-      queryParams.push(filterDatetimeFrom);
+    if (calculateAmount) {
+      querySql += ", COALESCE(SUM(h.amount), 0) amount";
+      querySql +=
+        ", COALESCE(ROUND(SUM(h.amount)*100.0/SUM(SUM(h.amount)) OVER(), 2), 0) amount_percentage";
+      queryParams.push(clientTimezone);
+      querySql += `, COALESCE(ROUND(SUM(h.amount) * 1.0 / NULLIF(COUNT(DISTINCT DATE(h.datetime AT TIME ZONE $${queryParams.length})), 0), 2), 0) amount_average_per_day`;
     }
+
+    querySql += " FROM wallets w";
+    querySql += " JOIN types t ON t.id = w.type_id";
+
+    if (calculateAmount || filterCategories.length || filterDatetimeFrom) {
+      querySql += " LEFT JOIN history h ON h.wallet_id = w.id";
+      if (filterDatetimeFrom) {
+        queryParams.push(filterDatetimeFrom);
+        querySql += ` AND h.datetime >= $${queryParams.length}`;
+      }
+    }
+
+    if (filterCategories.length) {
+      querySql += " LEFT JOIN categories c ON c.id = h.category_id";
+    }
+
+    queryParams.push(tokenData.userId);
+    querySql += ` WHERE w.deleted_at IS NULL AND w.user_id = $${queryParams.length}`;
 
     if (search) {
       queryParams.push(`%${search}%`);
@@ -119,8 +123,6 @@ export async function POST(request: NextRequest) {
     const tokenData = await processToken(token);
 
     const { name, type_id } = await request.json();
-
-    await dbMigrate();
 
     const client = await pool.connect();
 

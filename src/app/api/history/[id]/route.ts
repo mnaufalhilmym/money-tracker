@@ -9,7 +9,6 @@ import { insertImagesTx } from "../_util/dbInsertImages";
 import { insertHistoryImagesTx } from "../_util/dbInsertHistoryImages";
 import { selectHistoryTx } from "../_util/dbSelectHistory";
 import { validateCategoryId, validateWalletId } from "../_util/validation";
-import dbMigrate from "../../_lib/db/migrate";
 import Log from "@/util/log";
 
 export async function GET(
@@ -22,8 +21,6 @@ export async function GET(
     const tokenData = await processToken(token);
 
     const { id } = await params;
-
-    await dbMigrate();
 
     const history = await pool.query<HistoryI>(
       "SELECT" +
@@ -75,6 +72,8 @@ export async function PUT(
   try {
     const tokenData = await processToken(token);
 
+    const clientTimezone = request.headers.get("x-time-zone");
+
     const { id: idStr } = await params;
     const id = Number(idStr);
 
@@ -119,10 +118,12 @@ export async function PUT(
       }
     }
 
-    await dbMigrate();
-
-    await validateWalletId(tokenData.userId, wallet_id?.[0]);
-    await validateCategoryId(tokenData.userId, category_id?.[0]);
+    await validateWalletId(clientTimezone, tokenData.userId, wallet_id?.[0]);
+    await validateCategoryId(
+      clientTimezone,
+      tokenData.userId,
+      category_id?.[0]
+    );
 
     const client = await pool.connect();
 
@@ -238,8 +239,6 @@ export async function DELETE(
     const tokenData = await processToken(token);
 
     const { id } = await params;
-
-    await dbMigrate();
 
     const client = await pool.connect();
 
