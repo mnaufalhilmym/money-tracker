@@ -158,12 +158,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await validateWalletId(clientTimezone, tokenData.userId, wallet_id?.[0]);
-    await validateCategoryId(
-      clientTimezone,
-      tokenData.userId,
-      category_id?.[0]
-    );
+    await validateWalletId(clientTimezone, tokenData.userId, wallet_id);
+    await validateCategoryId(clientTimezone, tokenData.userId, category_id);
 
     const client = await pool.connect();
 

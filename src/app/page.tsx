@@ -54,12 +54,15 @@ export default function Home() {
 
     const oneWeekBefore = new Date(now);
     oneWeekBefore.setDate(now.getDate() - 7);
+    oneWeekBefore.setHours(0, 0, 0, 0);
 
     const oneMonthBefore = new Date(now);
     oneMonthBefore.setMonth(now.getMonth() - 1);
+    oneMonthBefore.setHours(0, 0, 0, 0);
 
     const oneYearBefore = new Date(now);
     oneYearBefore.setFullYear(now.getFullYear() - 1);
+    oneYearBefore.setHours(0, 0, 0, 0);
 
     return [
       { per: "day", name: "Last week", datetime: oneWeekBefore },
