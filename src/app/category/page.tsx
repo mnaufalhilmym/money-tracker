@@ -3,7 +3,6 @@
 import AddIcon from "@/component/icon/AddIcon";
 import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
-import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CategoryFormSheet from "./_component/CategoryFormSheet";
@@ -15,10 +14,11 @@ import getTypes from "@/util/fetchData/getTypes";
 import apiGetCategories from "@/util/fetchData/getCategories";
 import Log from "@/util/log";
 import toTitleCase from "@/util/titleCase";
+import SearchInput from "@/component/input/SearchInput";
 
 async function getCategories(
   abortSignal: AbortSignal,
-  params?: { search?: string; filter?: number[]; page?: number }
+  params?: { search?: string; filter?: number[]; page?: number },
 ) {
   const queryParams: { key: string; value: string | number }[] = [
     { key: "st", value: 1 },
@@ -156,7 +156,7 @@ export default function Categories() {
     try {
       const categories = await getCategories(
         categoriesFetchAbortController.current.signal,
-        { search, filter, page: categoriesPage }
+        { search, filter, page: categoriesPage },
       );
       setCategories((prev) => ({
         data: [...prev.data, ...categories.data],
@@ -174,35 +174,32 @@ export default function Categories() {
 
   return (
     <>
-      <div className="pb-4 flex items-center justify-between text-lg">
+      <div className="flex items-center justify-between pb-4 text-lg">
         <Link href="/" className="p-1">
           <ArrowBackIcon />
         </Link>
-        <p className="font-bold text-center">Categories</p>
+        <p className="text-center font-bold">Categories</p>
         <button
           type="button"
           onClick={() => setIsOpenAddSheet(true)}
-          className="p-1 cursor-pointer"
+          className="cursor-pointer p-1"
         >
           <AddIcon />
         </button>
       </div>
 
-      <div className="flex item-center gap-x-2">
-        <div className="flex-1 px-4 py-2 flex items-center gap-x-2 rounded-full border border-white/20">
-          <SearchIcon />
-          <input
-            type="text"
+      <div className="item-center flex gap-x-2">
+        <div className="min-w-0 flex-1">
+          <SearchInput
             placeholder="Search category"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full outline-none placeholder:text-neutral-500"
+            search={search}
+            setSearch={setSearch}
           />
         </div>
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-1 text-lg cursor-pointer"
+          className="cursor-pointer p-1 text-lg"
         >
           <FilterIcon />
         </button>
@@ -211,16 +208,16 @@ export default function Categories() {
       <div className="mt-4 space-y-4">
         {groupedCategories.map((gc) => (
           <div key={`grouped_category_${gc.typeId}`}>
-            <p className="font-bold text-lg">{gc.formattedTypeName}</p>
+            <p className="text-lg font-bold">{gc.formattedTypeName}</p>
             <div className="mt-2 space-y-2.5">
               {gc.data.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setEditCategory(c)}
-                  className="w-full flex items-center gap-x-2 cursor-pointer"
+                  className="flex w-full cursor-pointer items-center gap-x-2"
                 >
                   <div
-                    className="w-8 h-8 rounded-full"
+                    className="h-8 w-8 rounded-full"
                     style={{ backgroundColor: c.color }}
                   />
                   <p className="font-bold">{c.name}</p>

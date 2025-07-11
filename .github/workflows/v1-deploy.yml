@@ -1,0 +1,45 @@
+name: CI/CD to VPS
+
+on:
+  push:
+    branches:
+      - v1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: podincloud0 deployment
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Registry
+      run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ secrets.REGISTRY_URL }} -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+    - name: Create .env.prd from secret
+      run: printf "%s" "${{ secrets.ENV_FILE_PRD }}" > .env.prd
+
+    - name: Build and Push Docker Image
+      run: |
+        IMAGE=${{ secrets.REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}
+        docker build --build-arg BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) -t $IMAGE .
+        docker push $IMAGE
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: SSH to VPS and Redeploy
+      run: |
+        IMAGE=${{ secrets.REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}
+        ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          docker login ${{ secrets.REGISTRY_URL }} -u '${{ secrets.REGISTRY_USER }}' -p '${{ secrets.REGISTRY_PASSWORD }}'
+          cd ${{ secrets.APP_PATH }}
+          docker compose down -v ${{ secrets.SERVICE_NAME }}
+          docker image rm $IMAGE
+          docker compose up -d
+        EOF

@@ -3,7 +3,6 @@
 import AddIcon from "@/component/icon/AddIcon";
 import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
-import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import WalletFormSheet from "./_component/WalletFormSheet";
@@ -15,10 +14,11 @@ import getTypes from "@/util/fetchData/getTypes";
 import apiGetWallets from "@/util/fetchData/getWallets";
 import Log from "@/util/log";
 import toTitleCase from "@/util/titleCase";
+import SearchInput from "@/component/input/SearchInput";
 
 async function getWallets(
   abortSignal: AbortSignal,
-  params?: { search?: string; filter?: number[]; page?: number }
+  params?: { search?: string; filter?: number[]; page?: number },
 ) {
   const queryParams: { key: string; value: string | number }[] = [
     { key: "st", value: 1 },
@@ -152,7 +152,7 @@ export default function Wallets() {
     try {
       const wallets = await getWallets(
         walletsFetchAbortController.current.signal,
-        { search, filter, page: walletsPage }
+        { search, filter, page: walletsPage },
       );
       setWallets((prev) => ({
         data: [...prev.data, ...wallets.data],
@@ -169,35 +169,32 @@ export default function Wallets() {
 
   return (
     <>
-      <div className="pb-4 flex items-center justify-between text-lg">
+      <div className="flex items-center justify-between pb-4 text-lg">
         <Link href="/" className="p-1">
           <ArrowBackIcon />
         </Link>
-        <p className="font-bold text-center">Wallets</p>
+        <p className="text-center font-bold">Wallets</p>
         <button
           type="button"
           onClick={() => setIsOpenAddSheet(true)}
-          className="p-1 cursor-pointer"
+          className="cursor-pointer p-1"
         >
           <AddIcon />
         </button>
       </div>
 
-      <div className="flex item-center gap-x-2">
-        <div className="flex-1 px-4 py-2 flex items-center gap-x-2 rounded-full border border-white/20">
-          <SearchIcon />
-          <input
-            type="text"
+      <div className="item-center flex gap-x-2">
+        <div className="min-w-0 flex-1">
+          <SearchInput
             placeholder="Search wallet"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full outline-none placeholder:text-neutral-500"
+            search={search}
+            setSearch={setSearch}
           />
         </div>
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-1 text-lg cursor-pointer"
+          className="cursor-pointer p-1 text-lg"
         >
           <FilterIcon />
         </button>
@@ -206,13 +203,13 @@ export default function Wallets() {
       <div className="mt-4 space-y-4">
         {groupedWallets.map((gw) => (
           <div key={`grouped_wallet_${gw.typeId}`}>
-            <p className="font-bold text-lg">{gw.formattedTypeName}</p>
+            <p className="text-lg font-bold">{gw.formattedTypeName}</p>
             <div className="mt-2 space-y-2.5">
               {gw.data.map((w) => (
                 <button
                   key={w.id}
                   onClick={() => setEditWallet(w)}
-                  className="block w-full h-8  px-2 text-left border border-white/20 rounded-lg cursor-pointer"
+                  className="block h-8 w-full cursor-pointer rounded-lg border border-white/20 px-2 text-left"
                 >
                   <p>{w.name}</p>
                 </button>

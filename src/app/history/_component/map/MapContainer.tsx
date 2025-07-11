@@ -1,14 +1,14 @@
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer } from "react-leaflet";
 import LocationMarker from "./LocationMarker";
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LocateMeButton from "./LocateMeButton";
 import useDebounce from "@/hook/useDebounce";
-import SearchIcon from "@/component/icon/SearchIcon";
 import SearchList from "./SearchList";
 import { Map } from "leaflet";
 import GeolocationErrorSheet from "./GeolocationErrorSheet";
 import Log from "@/util/log";
+import SearchInput from "@/component/input/SearchInput";
 
 interface Props {
   isSheetOpen: boolean;
@@ -89,9 +89,9 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
 
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-          debounceSearchLocation
+          debounceSearchLocation,
         )}&format=json`,
-        { signal: abortController.signal }
+        { signal: abortController.signal },
       );
       const data: NovatimLocation[] = await res.json();
 
@@ -145,19 +145,21 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
       (err) => {
         setGeolocationError(err);
         setIsLoadingLocateMe(false);
-      }
+      },
     );
   }
 
-  function onChangeSearch(e: ChangeEvent<HTMLInputElement>) {
-    setSearchLocation(e.target.value);
-    if (e.target.value) {
+  function onChangeSearch(value: string) {
+    setSearchLocation(value);
+    if (value) {
       setIsLoadingSearchResult(true);
     }
-    setIsShowSearchResult(!!e.target.value);
+    setIsShowSearchResult(!!value);
   }
 
   async function changePosition(lat: number, lng: number) {
+    fetchControllerRef.current?.abort();
+
     props.setIsLoading(true);
 
     setLocation(undefined);
@@ -165,12 +167,11 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
     mapRef.current?.setView([lat, lng]);
 
     // Call reverse geocoding using Nominatim
-    fetchControllerRef.current?.abort();
     fetchControllerRef.current = new AbortController();
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-        { signal: fetchControllerRef.current?.signal }
+        { signal: fetchControllerRef.current?.signal },
       );
       const data: NovatimLocation = await res.json();
 
@@ -181,13 +182,14 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
         name: data.name,
         displayName: data.display_name,
       });
+
+      props.setIsLoading(false);
     } catch (error: unknown) {
       if (!(error instanceof Error) || error.name !== "AbortError") {
+        props.setIsLoading(false);
         Log.error("Error nominatim.openstreetmap.org", error);
       }
     }
-
-    props.setIsLoading(false);
   }
 
   function pickSearchPosition(loc: {
@@ -211,31 +213,28 @@ export default function LeafletMapContainer(props: Readonly<Props>) {
   return (
     <>
       <div className="relative">
-        <div className="w-full px-4 py-2 flex items-center gap-x-2 rounded-full border border-white/20">
-          <SearchIcon />
-          <input
-            type="text"
+        <div className="min-w-0 flex-1">
+          <SearchInput
             placeholder="Search location"
-            value={searchLocation}
-            onChange={onChangeSearch}
+            search={searchLocation}
+            setSearch={onChangeSearch}
             onFocus={() =>
               searchLocation ? setIsShowSearchResult(true) : undefined
             }
-            className="w-full outline-none placeholder:text-neutral-500"
           />
         </div>
 
         {isShowSearchResult && (
           <div
             onClick={() => setIsShowSearchResult(false)}
-            className="mt-1.75 absolute z-1001 w-full"
+            className="absolute z-1001 mt-1.75 w-full"
             style={{ height: mapHeight }}
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="flex flex-col h-full max-h-96 p-4 rounded-b-2xl bg-zinc-800/90 overflow-hidden"
+              className="flex h-full max-h-96 flex-col overflow-hidden rounded-b-2xl bg-zinc-800/90 p-4"
             >
-              <div className="min-h-0 h-full overflow-y-auto scrollable">
+              <div className="scrollable h-full min-h-0 overflow-y-auto">
                 <SearchList
                   loadingList={isLoadingSearchResult}
                   list={searchResult}

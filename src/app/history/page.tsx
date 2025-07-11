@@ -3,7 +3,6 @@
 import AddIcon from "@/component/icon/AddIcon";
 import ArrowBackIcon from "@/component/icon/ArrowBackIcon";
 import FilterIcon from "@/component/icon/FilterIcon";
-import SearchIcon from "@/component/icon/SearchIcon";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import HistoryFilterSheet from "./_component/HistoryFilterSheet";
@@ -18,6 +17,7 @@ import apiGetHistory from "@/util/fetchData/getHistory";
 import Log from "@/util/log";
 import useDateNow from "@/hook/useDateNow";
 import { formatRupiah } from "@/util/formatAmount";
+import SearchInput from "@/component/input/SearchInput";
 
 async function getHistory(
   abortSignal: AbortSignal,
@@ -27,7 +27,7 @@ async function getHistory(
     filterWallets?: number[];
     filterCategories?: number[];
     page?: number;
-  }
+  },
 ) {
   const queryParams: { key: string; value: string | number }[] = [
     { key: "l", value: 20 },
@@ -248,7 +248,7 @@ export default function History() {
           filterWallets,
           filterCategories,
           page: historyPage,
-        }
+        },
       );
       setHistory((prev) => ({
         ...prev,
@@ -265,35 +265,32 @@ export default function History() {
 
   return (
     <>
-      <div className="pb-4 flex items-center justify-between text-lg">
+      <div className="flex items-center justify-between pb-4 text-lg">
         <Link href="/" className="p-1">
           <ArrowBackIcon />
         </Link>
-        <p className="font-bold text-center">History</p>
+        <p className="text-center font-bold">History</p>
         <button
           type="button"
           onClick={() => setisOpenAddSheet(true)}
-          className="p-1 cursor-pointer"
+          className="cursor-pointer p-1"
         >
           <AddIcon />
         </button>
       </div>
 
-      <div className="flex item-center gap-x-2">
-        <div className="flex-1 px-4 py-2 flex items-center gap-x-2 rounded-full border border-white/20">
-          <SearchIcon />
-          <input
-            type="text"
+      <div className="item-center flex gap-x-2">
+        <div className="min-w-0 flex-1">
+          <SearchInput
             placeholder="Search history"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full outline-none placeholder:text-neutral-500"
+            search={search}
+            setSearch={setSearch}
           />
         </div>
         <button
           type="button"
           onClick={() => setIsOpenFilterSheet(true)}
-          className="p-1 text-lg cursor-pointer"
+          className="cursor-pointer p-1 text-lg"
         >
           <FilterIcon />
         </button>
@@ -302,21 +299,21 @@ export default function History() {
       <div className="mt-4 space-y-4">
         {[...groupedHistories].map(([dateKey, items]) => (
           <div key={dateKey}>
-            <p className="font-bold text-lg">{dateKey}</p>
+            <p className="text-lg font-bold">{dateKey}</p>
             <div className="mt-2 space-y-2.5">
               {items.map((i) => (
                 <button
                   key={i.id}
                   onClick={() => setEditHistory(history.data[i.idx])}
-                  className="w-full flex items-center gap-x-2 text-left cursor-pointer"
+                  className="flex w-full cursor-pointer items-center gap-x-2 text-left"
                 >
                   <div
-                    className="w-8 h-8 rounded-full"
+                    className="h-8 w-8 rounded-full"
                     style={{ backgroundColor: i.category_color }}
                   />
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-x-2 justify-between">
+                    <div className="flex items-center justify-between gap-x-2">
                       <div>
                         <p className="font-bold">{i.description}</p>
                         <p className="text-xs text-white/70">{i.datetime}</p>
@@ -333,7 +330,7 @@ export default function History() {
                     </div>
                     {i.location_name && i.location_display_name && (
                       <div>
-                        <p className="text-xs text-white/70 truncate">
+                        <p className="truncate text-xs text-white/70">
                           {i.location_name} • {i.location_display_name}
                         </p>
                       </div>
